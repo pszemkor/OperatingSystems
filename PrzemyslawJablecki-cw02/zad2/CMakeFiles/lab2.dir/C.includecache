@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/przemek/Pulpit/OperatingSystems/PrzemyslawJablecki-cw02/zad2/main.c
+stdio.h
+-
+stdio.h
+-
+sys/stat.h
+-
+stdlib.h
+-
+time.h
+-
+string.h
+-
+dirent.h
+-
+ftw.h
+-
+strings.h
+-
+

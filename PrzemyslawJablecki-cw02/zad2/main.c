@@ -63,6 +63,7 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
         free(path);
+
     }
 
     return 0;
@@ -105,7 +106,7 @@ void traverse_files(char *path, const char *date_mode, time_t date) {
         if (S_ISDIR(stat.st_mode)) {
             traverse_files(new_path, date_mode, date);
         }
-
+        free(new_path);
     }
     if (closedir(directory) == -1) {
         fprintf(stderr, "cannot close directory");

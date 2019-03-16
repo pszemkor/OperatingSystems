@@ -7,8 +7,6 @@
 
 
 int main(int argc, char **argv) {
-
-
     struct tms start;
     struct tms end;
 
@@ -21,7 +19,7 @@ int main(int argc, char **argv) {
 
             if (strcmp("generate", argv[i]) == 0) {
 
-                op_name = (char*)malloc(strlen("generate"));
+                op_name = (char*)malloc(strlen("generate") + 1);
                 sprintf(op_name,"generate");
 
                 int status;
@@ -29,14 +27,15 @@ int main(int argc, char **argv) {
                 char* name;
                 int record_size;
                 if((status = check_generate_prereq(i,argc,argv,&record_size,&record_amount,&name)) == -1){
-                    //LIPA
+                    fprintf(stderr,"conditions for generate are not met");
+                    break;
                 }else{
                     i = status;
                     generate(record_amount,record_size,name);
                 }
             }
             else if(strcmp("sort", argv[i]) == 0){
-                op_name = (char*)malloc(strlen("sort"));
+                op_name = (char*)malloc(strlen("sort") + 1);
                 sprintf(op_name,"sort");
 
                 int status;
@@ -45,7 +44,8 @@ int main(int argc, char **argv) {
                 char* filename;
                 char* mode;
                 if((status = check_prerequisites(i,argc,argv,&record_size,&amount,&filename,&mode)) == -1){
-                        //ERROR
+                    fprintf(stderr,"conditions for sort are not met");
+                    break;
                 }else{
                     i = status;
                     //Check errors -> TO DO
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 
             }
             else if(strcmp("copy", argv[i]) == 0){
-                op_name = (char*)malloc(strlen("copy"));
+                op_name = (char*)malloc(strlen("copy")+1);
                 sprintf(op_name,"copy");
                 int record_size;
                 int amount;
@@ -63,22 +63,22 @@ int main(int argc, char **argv) {
                 char* mode;
                 int status;
                 if((status = check_cpy_prerequisites(i,argc,argv,&record_size,&amount,&filename1,&filename2,&mode)) == -1){
-                    //ERROR
+                    fprintf(stderr,"conditions for copy are not met");
+                    break;
                 }else{
                     i = status;
 
                     if(strcmp(filename1,filename2) != 0){
                         copy(record_size,amount,filename1,filename2,mode);
                     }else{
-                        //PRINT SOME ERROR
-                        //TWO SAME FILES
+                        fprintf(stderr,"cannot copy data between two same files");
+                        break;
                     }
                 }
 
             }else{
-                //PRINT SOME ERROR
                 fprintf(stderr,"Wrong command");
-                i = argc;
+                break;
             }
 
             times(&end);
