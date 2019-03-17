@@ -256,19 +256,19 @@ int check_cpy_prerequisites(int curr_arg_index, int argc, char **argv,
     }
 
     long chars_number_1;
-    long chars_number_2;
+    //long chars_number_2;
 
     if ((chars_number_1 = get_file_size(*filename1)) == -1) {
         fprintf(stderr, "cannot get file size");
         return -1;
     }
 
-    if ((chars_number_2 = get_file_size(*filename2)) == -1) {
-        fprintf(stderr, "cannot get file size");
-        return -1;
-    }
+   // if ((chars_number_2 = get_file_size(*filename2)) == -1) {
+     //   fprintf(stderr, "cannot get file size");
+     //   return -1;
+   // }
 
-    if (chars_number_1 < chars_number_2 || chars_number_1 % *amount != 0 || chars_number_1 % *record_size != 0) {
+    if (chars_number_1 % *amount != 0 || chars_number_1 % *record_size != 0) {
         fprintf(stderr, "cannot divide file into given records ");
         return -1;
     }
