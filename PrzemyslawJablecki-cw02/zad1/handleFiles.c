@@ -256,18 +256,11 @@ int check_cpy_prerequisites(int curr_arg_index, int argc, char **argv,
     }
 
     long chars_number_1;
-    //long chars_number_2;
 
     if ((chars_number_1 = get_file_size(*filename1)) == -1) {
         fprintf(stderr, "cannot get file size");
         return -1;
     }
-
-   // if ((chars_number_2 = get_file_size(*filename2)) == -1) {
-     //   fprintf(stderr, "cannot get file size");
-     //   return -1;
-   // }
-
     if (chars_number_1 % *amount != 0 || chars_number_1 % *record_size != 0) {
         fprintf(stderr, "cannot divide file into given records ");
         return -1;
@@ -289,12 +282,12 @@ void copy(int record_size, int amount, char *filename1, char *filename2, char *m
 
     if (strcmp(mode, "lib") == 0) {
         FILE *fp1 = NULL;
-        if ((fp1 = fopen(filename1, "r")) == NULL) {
+        if ((fp1 = fopen(filename1, "a+")) == NULL) {
             fprintf(stderr, "cannot open file ");
             exit(1);
         }
         FILE *fp2 = NULL;
-        if ((fp2 = fopen(filename2, "r+")) == NULL) {
+        if ((fp2 = fopen(filename2, "a+")) == NULL) {
             fprintf(stderr, "cannot open file ");
             exit(1);
         }

@@ -1,0 +1,38 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/przemek/Pulpit/OperatingSystems/PrzemyslawJablecki-cw02/zad1/handleFiles.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+unistd.h
+-
+fcntl.h
+-
+handleFiles.h
+/home/przemek/Pulpit/OperatingSystems/PrzemyslawJablecki-cw02/zad1/handleFiles.h
+
+/home/przemek/Pulpit/OperatingSystems/PrzemyslawJablecki-cw02/zad1/handleFiles.h
+
+/home/przemek/Pulpit/OperatingSystems/PrzemyslawJablecki-cw02/zad1/main.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+sys/times.h
+-
+unistd.h
+-
+handleFiles.h
+/home/przemek/Pulpit/OperatingSystems/PrzemyslawJablecki-cw02/zad1/handleFiles.h
+
