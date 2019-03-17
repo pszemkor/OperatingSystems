@@ -1,1 +1,0 @@
-/usr/bin/cc  -Wall -O2  -rdynamic CMakeFiles/lab2.dir/main.c.o CMakeFiles/lab2.dir/handleFiles.c.o  -o lab2 
