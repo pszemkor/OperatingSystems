@@ -1,3 +1,0 @@
-/home/przemek/Pulpit/OperatingSystems/PrzemyslawJablecki-cw02/zad2/CMakeFiles/rebuild_cache.dir
-/home/przemek/Pulpit/OperatingSystems/PrzemyslawJablecki-cw02/zad2/CMakeFiles/lab2.dir
-/home/przemek/Pulpit/OperatingSystems/PrzemyslawJablecki-cw02/zad2/CMakeFiles/edit_cache.dir
