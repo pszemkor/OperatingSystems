@@ -1,7 +1,7 @@
 #! /bin/bash
 
-record_sizes=(1024 4096 8192)
-records_no=(1000 2000 3000)
+record_sizes=(1 4 512 1024 4096 8192)
+records_no=(1000 2000 3000 4000)
 
 for size in ${record_sizes[*]}
 do

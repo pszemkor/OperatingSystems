@@ -203,11 +203,11 @@ int check_prerequisites(int curr_arg_index, int argc, char **argv,
         fprintf(stderr, "cannot covert to num ");        return -1;
     }
 
-    long chars_number = get_file_size(*filename);
-    if (chars_number % *record_size != 0 || chars_number % *amount != 0) {
-        fprintf(stderr, "cannot divide file into given records ");
-        return -1;
-    }
+    //long chars_number = get_file_size(*filename);
+    //if (chars_number % *record_size != 0 || chars_number % *amount != 0) {
+        //fprintf(stderr, "cannot divide file into given records ");
+       // return -1;
+   // }
 
     *mode = argv[++curr_arg_index];
 

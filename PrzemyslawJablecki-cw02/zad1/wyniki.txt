@@ -1,0 +1,300 @@
+record size: 1
+records no: 1000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.08s
+sort:  usr:    0.08s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.24s
+sort:  usr:    0.09s
+ 
+records no: 2000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.41s
+sort:  usr:    0.17s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.98s
+sort:  usr:    0.44s
+ 
+records no: 3000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.90s
+sort:  usr:    0.65s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     2.34s
+sort:  usr:    0.85s
+ 
+records no: 4000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     1.50s
+sort:  usr:    0.92s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     4.38s
+sort:  usr:    1.66s
+ 
+record size: 4
+records no: 1000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.10s
+sort:  usr:    0.06s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.30s
+sort:  usr:    0.10s
+ 
+records no: 2000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.38s
+sort:  usr:    0.27s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     1.01s
+sort:  usr:    0.44s
+ 
+records no: 3000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.81s
+sort:  usr:    0.57s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     2.63s
+sort:  usr:    0.86s
+ 
+records no: 4000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     1.51s
+sort:  usr:    1.00s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     4.15s
+sort:  usr:    1.59s
+ 
+record size: 512
+records no: 1000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.10s
+sort:  usr:    0.10s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.28s
+sort:  usr:    0.11s
+ 
+records no: 2000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.68s
+sort:  usr:    0.25s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     1.38s
+sort:  usr:    0.39s
+ 
+records no: 3000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     1.10s
+sort:  usr:    0.66s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     2.40s
+sort:  usr:    0.91s
+ 
+records no: 4000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.01s
+sort:  sys:     1.99s
+sort:  usr:    1.14s
+sys version: 
+copy:  sys:     0.01s
+copy:  usr:    0.00s
+sort:  sys:     5.06s
+sort:  usr:    1.53s
+ 
+record size: 1024
+records no: 1000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.16s
+sort:  usr:    0.09s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.33s
+sort:  usr:    0.07s
+ 
+records no: 2000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.01s
+sort:  sys:     0.75s
+sort:  usr:    0.41s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     1.15s
+sort:  usr:    0.44s
+ 
+records no: 3000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.01s
+sort:  sys:     1.54s
+sort:  usr:    0.68s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     2.55s
+sort:  usr:    0.91s
+ 
+records no: 4000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.03s
+sort:  sys:     2.62s
+sort:  usr:    1.20s
+sys version: 
+copy:  sys:     0.01s
+copy:  usr:    0.00s
+sort:  sys:     5.25s
+sort:  usr:    1.72s
+ 
+record size: 4096
+records no: 1000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.02s
+sort:  sys:     0.41s
+sort:  usr:    0.11s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.39s
+sort:  usr:    0.10s
+ 
+records no: 2000
+lib version: 
+copy:  sys:     0.01s
+copy:  usr:    0.03s
+sort:  sys:     1.77s
+sort:  usr:    0.45s
+sys version: 
+copy:  sys:     0.01s
+copy:  usr:    0.00s
+sort:  sys:     1.18s
+sort:  usr:    0.43s
+ 
+records no: 3000
+lib version: 
+copy:  sys:     0.02s
+copy:  usr:    0.05s
+sort:  sys:     3.79s
+sort:  usr:    1.09s
+sys version: 
+copy:  sys:     0.01s
+copy:  usr:    0.00s
+sort:  sys:     2.70s
+sort:  usr:    0.83s
+ 
+records no: 4000
+lib version: 
+copy:  sys:     0.00s
+copy:  usr:    0.09s
+sort:  sys:     6.69s
+sort:  usr:    1.98s
+sys version: 
+copy:  sys:     0.01s
+copy:  usr:    0.00s
+sort:  sys:     4.87s
+sort:  usr:    1.55s
+ 
+record size: 8192
+records no: 1000
+lib version: 
+copy:  sys:     0.01s
+copy:  usr:    0.03s
+sort:  sys:     0.43s
+sort:  usr:    0.10s
+sys version: 
+copy:  sys:     0.00s
+copy:  usr:    0.00s
+sort:  sys:     0.32s
+sort:  usr:    0.09s
+ 
+records no: 2000
+lib version: 
+copy:  sys:     0.03s
+copy:  usr:    0.07s
+sort:  sys:     1.61s
+sort:  usr:    0.50s
+sys version: 
+copy:  sys:     0.01s
+copy:  usr:    0.00s
+sort:  sys:     1.21s
+sort:  usr:    0.41s
+ 
+records no: 3000
+lib version: 
+copy:  sys:     0.02s
+copy:  usr:    0.11s
+sort:  sys:     3.94s
+sort:  usr:    1.06s
+sys version: 
+copy:  sys:     0.02s
+copy:  usr:    0.00s
+sort:  sys:     2.71s
+sort:  usr:    0.97s
+ 
+records no: 4000
+lib version: 
+copy:  sys:     0.02s
+copy:  usr:    0.16s
+sort:  sys:     6.97s
+sort:  usr:    2.01s
+sys version: 
+copy:  sys:     0.03s
+copy:  usr:    0.00s
+sort:  sys:     5.10s
+sort:  usr:    1.67s
+
+
+
+
+
+komentarz: wersja lib okazała się wolniejsza dla większości testów.
+ 
