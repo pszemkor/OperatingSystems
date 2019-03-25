@@ -211,8 +211,6 @@ int monitor(char *list_path, int monitoring_time, char *mode, int sec_limit, int
         waitpid(pids[i], &status, 0);
         printf("pid: %d\n", pids[i]);
         printf("changed files: %d \n", WEXITSTATUS(status));
-        int sig = WTERMSIG(status);
-        //printf("sig: %s\n", strsignal(sig));
         struct rusage r;
         if (getrusage(RUSAGE_CHILDREN, &r) < 0) {
             fprintf(stderr, "cannot get resources usage \n");

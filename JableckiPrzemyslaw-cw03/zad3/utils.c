@@ -73,7 +73,7 @@ char *getFile(char *file_name) {
         return NULL;
     }
 
-    char *filebuffer = malloc((size_t) (st.st_size + 1));
+    char *filebuffer = (char*)malloc((size_t) (st.st_size + 1));
     size_t size = (size_t) get_file_size(file_name);
     if (fread(filebuffer, 1, size, fp) != size){
         fprintf(stderr,"reading problem :(\n");

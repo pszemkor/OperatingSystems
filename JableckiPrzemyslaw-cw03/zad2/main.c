@@ -19,7 +19,7 @@ int exec_mode(char *file_from_list_path, time_t last_modification, struct stat s
     sprintf(backup, "%s%s", file_from_list_path, get_time(last_modification));
     int proc = fork();
     if (proc == 0) {
-        execl("/bin/cp", "cp", file_from_list_path, backup, (char *) 0);
+        execl("cp", "cp", file_from_list_path, backup, NULL);
         exit(EXIT_SUCCESS);
     } else if (proc < 0) {
         fprintf(stderr, " something went wrong, cannot create new process\n");
