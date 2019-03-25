@@ -8,19 +8,75 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <libgen.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/types.h>
 #include "utils.h"
+
+int exec_mode(char *file_from_list_path, time_t last_modification, struct stat st, int freq, int monitoring_time) {
+    int changed_files = 0;
+    char *backup = malloc(strlen(file_from_list_path) + 20);
+    sprintf(backup, "%s%s", file_from_list_path, get_time(last_modification));
+    int proc = fork();
+    if (proc == 0) {
+        execl("/bin/cp", "cp", file_from_list_path, backup, (char *) 0);
+        exit(EXIT_SUCCESS);
+    } else if (proc < 0) {
+        fprintf(stderr, " something went wrong, cannot create new process\n");
+        exit(changed_files);
+    } else {
+        int status;
+        wait(&status);
+        if (status == -1)
+            fprintf(stderr, "canot create backup \n");
+    }
+    int j;
+    for (j = 0; j < monitoring_time / freq; j++) {
+        printf("cos tam sprawdzam, a to moje pid i plik: %d, %s\n", getpid(),file_from_list_path);
+        sleep((unsigned int) freq);
+
+        if (stat(file_from_list_path, &st) == -1) {
+            fprintf(stderr, "stat problem :(\n");
+            return -1;
+        }
+
+        if (last_modification != st.st_mtime) {
+            ++changed_files;
+            int new_proc_pid = fork();
+            if (new_proc_pid == 0) {
+                char *newest = malloc(strlen(file_from_list_path) + 20);
+                sprintf(newest, "%s%s", file_from_list_path, get_time(st.st_mtime));
+                execl("/bin/cp", "cp", file_from_list_path, newest, (char *) 0);
+                free(newest);
+                exit(0);
+            } else if (new_proc_pid == -1) {
+                fprintf(stderr, "somthing went wrong, cannot make backup for file :( \n");
+                exit(changed_files);
+            } else {
+                int status;
+                wait(&status);
+                if (status != 0) {
+                    fprintf(stderr, "Could not backup '%s'\n", file_from_list_path);
+                }
+
+            }
+            last_modification = st.st_mtime;
+        }
+
+    }
+    free(backup);
+    return changed_files;
+}
 
 
 int prog_memory(size_t monitoring_time, size_t freq, struct stat st, time_t last_modification,
                 char *file_from_list_path) {
     int changed_files = 0;
-
-    char *file_content_array = NULL;
+    char *file_content_array = getFile(file_from_list_path);
+    if(!file_content_array){
+        exit(changed_files);
+    }
     size_t size = (size_t) get_file_size(file_from_list_path);
-    file_content_array = malloc(size);
-    printf("curr path: %s\n", file_from_list_path);
-    getFile(&file_content_array, file_from_list_path);
-
     int j;
     for (j = 0; j < monitoring_time / freq; j++) {
 
@@ -28,22 +84,26 @@ int prog_memory(size_t monitoring_time, size_t freq, struct stat st, time_t last
             fprintf(stderr, "stat problem :(\n");
             return -1;
         }
-        printf("cos tam sprawdzam, a to moje pid i plik: %d, %s\n", getpid(), file_from_list_path);
-        printf("in file: %s\n", file_content_array);
+
+        //printf("cos tam sprawdzam, a to moje pid i plik: %d, %s\n", getpid(), file_from_list_path);
+
         sleep((unsigned int) freq);
-        if (last_modification != st.st_mtime) { // checks whether file was modificated
+        if (last_modification != st.st_mtime) {
             last_modification = st.st_mtime;
-            //WRITE TO NEW FILE
+
             int check = write1(file_from_list_path, file_content_array, (int) size,
                                last_modification);
             if (check < 0) {
                 fprintf(stderr, "writing backup problem\n");
                 exit(changed_files);
             }
-            //READ FILE
+            free(file_content_array);
+
             size = (size_t) get_file_size(file_from_list_path);
-            file_content_array = realloc(file_content_array, size);
-            getFile(&file_content_array, file_from_list_path);
+            file_content_array = getFile(file_from_list_path);
+            if(!file_content_array){
+                exit(changed_files);
+            }
             changed_files++;
         }
 
@@ -83,22 +143,14 @@ int monitor(char *list_path, int monitoring_time, char *mode) {
                 break;
         char *i_buffer = malloc((read - i) * sizeof(char));
         if (!i_buffer) fprintf(stderr, "cannot allocate memory for buffer\n");
+
         char *file_from_list_path = malloc((size_t) (i - 1));
         if (!file_from_list_path) fprintf(stderr, "cannot allocate memory for buffer\n");
 
         memcpy(i_buffer, line + i, (size_t) (read - i));
         memcpy(file_from_list_path, line, (size_t) (i - 1));
-        for (int m = 0; m <= i - 1; m++) {
-            printf("%c", line[m]);
-        }
-        printf("\n");
         unsigned int freq = (unsigned int) convert_to_num(i_buffer);
-//        printf("i: %d\n",i);
-//        printf("freq: %d\n", freq);
-//        printf("line: %s\n", line);
-//        printf("path: %s\n", file_from_list_path);
-//        printf("strlen: %d\n", (int) strlen(file_from_list_path));
-        printf("allocated %d\n", i - 1);
+
         if (freq < 0) {
             fprintf(stderr, "wrong number in file\n");
             exit(EXIT_FAILURE);
@@ -106,77 +158,46 @@ int monitor(char *list_path, int monitoring_time, char *mode) {
 
         if (stat(file_from_list_path, &st) == -1) {
             fprintf(stderr, "stat problem :(\n");
-            printf("KAJHFKDSJHFKDSJHFKSDJHFKJDSHF: %s\n", file_from_list_path);
             return -1;
         }
 
         int cpid = fork();
         int changed_files = 0;
-        //child process is monitoring given file
         if (cpid == 0) {
             last_modification = st.st_mtime;
-            if (monitoring_time / freq != 0) { //checks whether monitoring time is not shorter than refreshing time
-
-                //storing file in program_memory mode:
+            if (monitoring_time / freq != 0) {
                 if (strcmp(mode, "prog_memory") == 0) {
-
                     changed_files = prog_memory((size_t) monitoring_time, freq, st, last_modification,
                                                 file_from_list_path);
-
                 } else { //EXEC MODE
-                    char *backup = malloc(strlen(file_from_list_path) + 20);
-                    sprintf(backup, "%s%s", file_from_list_path, get_time(last_modification));
-                    int proc = fork();
-                    if (proc == 0) {
-                        execl("/bin/cp", "cp", file_from_list_path, backup, (char *) 0);
-                        exit(EXIT_SUCCESS);
-                    }
-                    int j;
-                    for (j = 0; j < monitoring_time / freq; j++) {
-                        printf("cos tam sprawdzam, a to moje pid i plik: %d, %s\n", getpid(),
-                               file_from_list_path);
-                        sleep(freq);
-
-                        if (stat(file_from_list_path, &st) == -1) {
-                            fprintf(stderr, "stat problem :(\n");
-                            return -1;
-                        }
-
-                        if (last_modification != st.st_mtime) {
-                            ++changed_files;
-                            int new_proc_pid = fork();
-                            if (new_proc_pid == 0) {
-                                char *newest = malloc(strlen(file_from_list_path) + 20);
-                                sprintf(newest, "%s%s", file_from_list_path, get_time(st.st_mtime));
-                                execl("/bin/cp", "cp", file_from_list_path, newest, (char *) 0);
-                                free(newest);
-                                exit(0);
-                            }
-                            last_modification = st.st_mtime;
-                        }
-
-
-                    }
-                    free(backup);
+                    changed_files = exec_mode(file_from_list_path, last_modification,
+                                              st, freq, monitoring_time);
                 }
             }
             exit(changed_files);
+
         } else {
             pids[pid_index++] = cpid;
         }
         free(i_buffer);
         free(file_from_list_path);
     }
-// AFTER MAIN WHILE:
+
+
+// AFTER MAIN WHILE -> getting statuses
     int i;
     for (i = 0; i < lines_count; i++) {
         int status;
         waitpid(pids[i], &status, 0);
-        printf("status: %d \n", WEXITSTATUS(status));
+        printf("pid: %d\n", pids[i]);
+        printf("changed files: %d \n", WEXITSTATUS(status));
     }
+
     if (fclose(fp) == EOF) {
         fprintf(stderr, "cannot close list file :(");
+        exit(1);
     }
+    free(pids);
     return 1;
 }
 
@@ -192,7 +213,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     int monitoring_time = convert_to_num(argv[2]);
-    if (monitoring_time == -1) {
+    if (monitoring_time < 0 ) {
         fprintf(stderr, "wrong type of second argument, integer expected \n");
         exit(1);
     }

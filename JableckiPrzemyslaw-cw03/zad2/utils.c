@@ -6,11 +6,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <time.h>
 #include "utils.h"
 
 
 int convert_to_num(char *given_string) {
+    if(!given_string){
+        return -1;
+    }
     char *tmp;
     int result = (int) strtol(given_string, &tmp, 10);
     if (strcmp(tmp, given_string) != 0) {
@@ -59,20 +63,34 @@ char *get_time(time_t time) {
     strftime(buf, 100, DATE_FORMAT, localtime(&time));
     return buf;
 }
-void getFile(char **file_content, char *path) {
-
-    FILE * fp;
-    char * line = NULL;
-    size_t len = 0;
-
-    fp = fopen(path, "r");
-    if (fp == NULL)
-        exit(EXIT_FAILURE);
-
-    while (getline(&line, &len, fp) != -1) {
-        strcat(*file_content,line);
+char *getFile(char *file_name) {
+    struct stat st;
+    if (stat(file_name, &st) != 0){
+        fprintf(stderr,"stat problem:(\n");
+        return NULL;
     }
-    fclose(fp);
+
+    FILE* fp = fopen(file_name, "r");
+    if (!fp){
+        fprintf(stderr,"cannot open file :( \n");
+        return NULL;
+    }
+
+    char *filebuffer = malloc((size_t) (st.st_size + 1));
+    size_t size = (size_t) get_file_size(file_name);
+    if (fread(filebuffer, 1, size, fp) != size){
+        fprintf(stderr,"reading problem :(\n");
+        return NULL;
+    }
+
+    filebuffer[size] = '\0';
+
+    if (fclose(fp)){
+        fprintf(stderr,"cannot close file\n");
+        return NULL;
+    }
+
+    return filebuffer;
 }
 int write1(char *file_from_list_path, char *file_content, int size, time_t last_modification) {
 
@@ -81,14 +99,13 @@ int write1(char *file_from_list_path, char *file_content, int size, time_t last_
     sprintf(new_file_path, "%s%s", file_from_list_path, get_time(last_modification));
     FILE *fp1 = fopen(new_file_path, "w+");
     if (fp1 == NULL) {
-        printf("path to write: %s", new_file_path);
         fprintf(stderr, "cannot open file in order to write backup \n");
         return -1;
     }
-    printf("what was in file: %s\n", file_content);
     if (size != fwrite(file_content, sizeof(char), (size_t) size, fp1)) {
         fprintf(stderr, "cannot write into file \n");
     }
     fclose(fp1);
+    free(new_file_path);
     return 1;
 }
