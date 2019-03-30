@@ -96,13 +96,13 @@ int main(int argc, char *argv[])
     }
     else if (!strcmp(mode, "SIGQUEUE"))
     {
-        union sigval val;);
+        union sigval tmp;
         for (int i = 0; i < signals_to_send; i++)
-        {;
-            sigqueue(catcher_pid, SIGUSR1, val);
+        {
+            sigqueue(catcher_pid, SIGUSR1, tmp);
 
         }
-        sigqueue(catcher_pid, SIGUSR2, val);
+        sigqueue(catcher_pid, SIGUSR2, tmp);
     }
     else
     {

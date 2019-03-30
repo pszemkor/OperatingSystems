@@ -20,10 +20,10 @@ void handler(int sig, siginfo_t *info, void *ucontext) {
                 kill(info->si_pid, SIGUSR1);
             kill(info->si_pid, SIGUSR2);
         }else if(!strcmp(global_mode,"SIGQUEUE")){
-            union sigval val;
+                        union sigval tmp;
             for(int i = 0; i < received_signals; i++)
-                sigqueue(info->si_pid, SIGUSR1, val);
-            sigqueue(info->si_pid, SIGUSR2, val);
+                sigqueue(info->si_pid, SIGUSR1, tmp);
+            sigqueue(info->si_pid, SIGUSR2, tmp);
         }else{
             //TO DO
         }
@@ -54,7 +54,6 @@ int main(int argc, char *argv[]){
     if(!strcmp("KILL",mode) || !strcmp("SIGQUEUE", mode)){
         sigdelset(&blockmask, SIGUSR1);
         sigdelset(&blockmask, SIGUSR2);
-        sigdelset(&blockmask, SIGINT);
     }else{
         //TO DO
     }
@@ -62,8 +61,6 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "cannot set mask \n");
         exit(1);
     }
-
-
     struct sigaction act;
 
     /* When the SA_SIGINFO flag is specified in act.sa_flags, the signal
