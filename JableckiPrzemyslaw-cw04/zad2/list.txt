@@ -1,0 +1,2 @@
+/home/przjab98/Pulpit/OperatingSystems/JableckiPrzemyslaw-cw04/zad2/katalog/jeden.txt 1
+/home/przjab98/Pulpit/OperatingSystems/JableckiPrzemyslaw-cw04/zad2/katalog/dwa.txt 2
