@@ -16,20 +16,29 @@ void handler(int sig, siginfo_t *info, void *ucontext)
     if (sig == SIGUSR1)
     {
         received_signals++;
+        if (!strcmp(global_mode, "KILL"))
+        {
+            kill(info->si_pid, SIGUSR1);
+        }
+        else if (!strcmp(global_mode, "SIGQUEUE"))
+        {
+            union sigval tmp;
+            sigqueue(info->si_pid, SIGUSR1, tmp);
+        }
+        else
+        {
+            //TO DO
+        }
     }
     else if (sig == SIGUSR2)
     {
         if (!strcmp(global_mode, "KILL"))
-        {
-            for (int i = 0; i < received_signals; i++)
-                kill(info->si_pid, SIGUSR1);
+        {;
             kill(info->si_pid, SIGUSR2);
         }
         else if (!strcmp(global_mode, "SIGQUEUE"))
         {
             union sigval tmp;
-            for (int i = 0; i < received_signals; i++)
-                sigqueue(info->si_pid, SIGUSR1, tmp);
             sigqueue(info->si_pid, SIGUSR2, tmp);
         }
         else

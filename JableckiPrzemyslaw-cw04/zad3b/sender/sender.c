@@ -1,0 +1,167 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <signal.h>
+
+int received_signals = 0;
+int sent_signals;
+int catcher_pid_global;
+char *mode_global;
+
+int convert_to_num(char *given_string)
+{
+    if (!given_string)
+    {
+        return -1;
+    }
+    char *tmp;
+    int result = (int)strtol(given_string, &tmp, 10);
+    if (strcmp(tmp, given_string) != 0)
+    {
+        return result;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+void handler(int sig, siginfo_t *info, void *ucontext)
+{
+    //TO DO ->  REALTIME SIGNALS
+    if (sig == SIGUSR1)
+    {
+        received_signals++;
+        if (received_signals < sent_signals)
+        {
+            if (!strcmp(mode_global, "KILL"))
+            {
+                kill(catcher_pid_global, SIGUSR1);
+            }
+            else if (!strcmp(mode_global, "SIGQUEUE"))
+            {
+                union sigval tmp;
+                sigqueue(catcher_pid_global, SIGUSR1, tmp);
+            }
+            else
+            {
+                //TO DO
+            }
+        }
+        else
+        {
+            if (!strcmp(mode_global, "KILL"))
+            {
+                kill(catcher_pid_global, SIGUSR2);
+            }
+            else if (!strcmp(mode_global, "SIGQUEUE"))
+            {
+                union sigval tmp;
+                sigqueue(catcher_pid_global, SIGUSR2, tmp);
+            }
+            else
+            {
+                //TO DO
+            }
+        }
+    }
+    else if (sig == SIGUSR2)
+    {
+        printf("%d signals were sent and: %d were received \n", sent_signals, received_signals);
+        exit(0);
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    if (argc != 4)
+    {
+        fprintf(stderr, "too few args \n");
+        exit(1);
+    }
+
+    int catcher_pid = convert_to_num(argv[1]);
+    int signals_to_send = convert_to_num(argv[2]);
+    sent_signals = signals_to_send;
+    char *mode = argv[3];
+    if (catcher_pid < 0 || signals_to_send < 0)
+    {
+        fprintf(stderr, "wrong type of argument \n");
+        exit(1);
+    }
+    if (strcmp(mode, "KILL") != 0 && strcmp(mode, "SIGQUEUE") != 0 && strcmp(mode, "SIGRT") != 0)
+    {
+        fprintf(stderr, "unknown mode \n");
+        exit(1);
+    }
+    mode_global = mode;
+    catcher_pid_global = catcher_pid;
+
+    //program is supposed to block every signals except sigusr1 and sigusr2
+    sigset_t oldmask, blockmask;
+    sigemptyset(&oldmask);
+    sigemptyset(&blockmask);
+    sigfillset(&blockmask);
+
+    if (!strcmp(mode, "KILL") || !strcmp(mode, "SIGQUEUE"))
+    {
+        sigdelset(&blockmask, SIGUSR1);
+        sigdelset(&blockmask, SIGUSR2);
+    }
+    else
+    {
+        //TO DO
+    }
+
+    if (sigprocmask(SIG_BLOCK, &blockmask, &oldmask) == -1)
+    {
+        fprintf(stderr, "cannot set mask \n");
+        exit(1);
+    }
+
+    //sending signals to catcher:
+    if (!strcmp(mode, "KILL"))
+    {
+
+        kill(catcher_pid, SIGUSR1);
+    }
+    else if (!strcmp(mode, "SIGQUEUE"))
+    {
+        union sigval tmp;
+        sigqueue(catcher_pid, SIGUSR1, tmp);
+    }
+    else
+    {
+        //TO DO
+    }
+
+    struct sigaction act;
+
+    /* When the SA_SIGINFO flag is specified in act.sa_flags, the signal
+     handler address is passed via the act.sa_sigaction field */
+    act.sa_flags = SA_SIGINFO;
+    act.sa_sigaction = handler;
+    sigemptyset(&act.sa_mask);
+
+    //receiving signals from catcher:
+    if (!strcmp(mode, "KILL") || !strcmp(mode, "SIGQUEUE"))
+    {
+        sigaddset(&act.sa_mask, SIGUSR1);
+        sigaddset(&act.sa_mask, SIGUSR2);
+        sigaction(SIGUSR1, &act, NULL);
+        sigaction(SIGUSR2, &act, NULL);
+    }
+    else
+    {
+        //TO DO -> SIGRT MODE
+    }
+
+    //this loop won't let program end
+    while (1)
+    {
+        ;
+    }
+
+    return 0;
+}
