@@ -23,6 +23,7 @@ void handler_stop(int signum)
     printf("otrzymalem sygnal: %d  \n", signum);
 }
 void handler_start(int signum)
+
 {
     switch_ = 1;
     printf("otrzymalem sygnal: %d \n", signum);

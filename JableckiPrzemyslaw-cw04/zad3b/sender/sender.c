@@ -30,7 +30,7 @@ int convert_to_num(char *given_string)
 void handler(int sig, siginfo_t *info, void *ucontext)
 {
     //TO DO ->  REALTIME SIGNALS
-    if (sig == SIGUSR1)
+    if (sig == SIGUSR1 || sig == SIGRTMIN)
     {
         received_signals++;
         if (received_signals < sent_signals)
@@ -46,7 +46,7 @@ void handler(int sig, siginfo_t *info, void *ucontext)
             }
             else
             {
-                //TO DO
+                kill(catcher_pid_global, SIGRTMIN);
             }
         }
         else
@@ -62,11 +62,11 @@ void handler(int sig, siginfo_t *info, void *ucontext)
             }
             else
             {
-                //TO DO
+                kill(catcher_pid_global, SIGRTMIN + 1);
             }
         }
     }
-    else if (sig == SIGUSR2)
+    else if (sig == SIGUSR2 || sig == SIGRTMIN + 1)
     {
         printf("%d signals were sent and: %d were received \n", sent_signals, received_signals);
         exit(0);
@@ -111,7 +111,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        //TO DO
+        sigdelset(&blockmask, SIGRTMIN);
+        sigdelset(&blockmask, SIGRTMIN + 1);
     }
 
     if (sigprocmask(SIG_BLOCK, &blockmask, &oldmask) == -1)
@@ -133,7 +134,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        //TO DO
+        kill(catcher_pid, SIGRTMIN);
     }
 
     struct sigaction act;
@@ -154,7 +155,10 @@ int main(int argc, char *argv[])
     }
     else
     {
-        //TO DO -> SIGRT MODE
+        sigaddset(&act.sa_mask, SIGRTMIN);
+        sigaddset(&act.sa_mask, SIGRTMIN + 1);
+        sigaction(SIGRTMIN, &act, NULL);
+        sigaction(SIGRTMIN + 1, &act, NULL);
     }
 
     //this loop won't let program end

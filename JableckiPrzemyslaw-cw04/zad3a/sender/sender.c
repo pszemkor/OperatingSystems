@@ -28,11 +28,11 @@ int convert_to_num(char *given_string)
 void handler(int sig, siginfo_t *info, void *ucontext)
 {
     //TO DO ->  REALTIME SIGNALS
-    if (sig == SIGUSR1)
+    if (sig == SIGUSR1 || sig == SIGRTMIN)
     {
         received_signals++;
     }
-    else if (sig == SIGUSR2)
+    else if (sig == SIGUSR2 || sig == SIGRTMIN + 1)
     {
         printf("%d signals were sent and: %d were received \n", sent_signals, received_signals);
         exit(0);
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     //program is supposed to block every signals except sigusr1 and sigusr2
     sigset_t oldmask, blockmask;
-    sigemptyset(&oldmask)
+    sigemptyset(&oldmask);
     sigemptyset(&blockmask);
     sigfillset(&blockmask);
 
@@ -75,7 +75,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        //TO DO
+        sigdelset(&blockmask, SIGRTMIN);
+        sigdelset(&blockmask, SIGRTMIN + 1);
     }
 
     if (sigprocmask(SIG_BLOCK, &blockmask, &oldmask) == -1)
@@ -100,13 +101,17 @@ int main(int argc, char *argv[])
         for (int i = 0; i < signals_to_send; i++)
         {
             sigqueue(catcher_pid, SIGUSR1, tmp);
-
         }
         sigqueue(catcher_pid, SIGUSR2, tmp);
     }
     else
     {
-        //TO DO
+        int i;
+        for (i = 0; i < signals_to_send; i++)
+        {
+            kill(catcher_pid, SIGRTMIN);
+        }
+        kill(catcher_pid, SIGRTMIN + 1);
     }
 
     struct sigaction act;
@@ -127,7 +132,10 @@ int main(int argc, char *argv[])
     }
     else
     {
-        //TO DO -> SIGRT MODE
+        sigaddset(&act.sa_mask, SIGRTMIN);
+        sigaddset(&act.sa_mask, SIGRTMIN + 1);
+        sigaction(SIGRTMIN, &act, NULL);
+        sigaction(SIGRTMIN + 1, &act, NULL);
     }
 
     //this loop won't let program end

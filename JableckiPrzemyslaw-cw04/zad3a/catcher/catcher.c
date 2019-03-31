@@ -13,11 +13,11 @@ char *global_mode;
 
 void handler(int sig, siginfo_t *info, void *ucontext)
 {
-    if (sig == SIGUSR1)
+    if (sig == SIGUSR1 || sig == SIGRTMIN)
     {
         received_signals++;
     }
-    else if (sig == SIGUSR2)
+    else if (sig == SIGUSR2 || sig == SIGRTMIN+1)
     {
         if (!strcmp(global_mode, "KILL"))
         {
@@ -34,7 +34,9 @@ void handler(int sig, siginfo_t *info, void *ucontext)
         }
         else
         {
-            //TO DO
+            for (int i = 0; i < received_signals; i++)
+                kill(info->si_pid, SIGRTMIN);
+            kill(info->si_pid, SIGRTMIN + 1);
         }
 
         printf("catcher received : %d signals \n", received_signals);
@@ -70,7 +72,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        //TO DO
+        sigdelset(&blockmask, SIGRTMIN);
+        sigdelset(&blockmask, SIGRTMIN + 1);
     }
     if (sigprocmask(SIG_BLOCK, &blockmask, &oldmask) == -1)
     {
@@ -93,7 +96,10 @@ int main(int argc, char *argv[])
     }
     else
     {
-        //TO DO -> SIGRT MODE
+        sigaddset(&act.sa_mask, SIGRTMIN);
+        sigaddset(&act.sa_mask, SIGRTMIN + 1);
+        sigaction(SIGRTMIN, &act, NULL);
+        sigaction(SIGRTMIN + 1, &act, NULL);
     }
     printf("my pid: %d \n", getpid());
     while (1)

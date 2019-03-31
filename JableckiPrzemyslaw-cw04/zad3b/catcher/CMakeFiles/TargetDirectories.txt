@@ -1,0 +1,3 @@
+/home/przjab98/Pulpit/OperatingSystems/JableckiPrzemyslaw-cw04/zad3b/catcher/CMakeFiles/rebuild_cache.dir
+/home/przjab98/Pulpit/OperatingSystems/JableckiPrzemyslaw-cw04/zad3b/catcher/CMakeFiles/catcher.dir
+/home/przjab98/Pulpit/OperatingSystems/JableckiPrzemyslaw-cw04/zad3b/catcher/CMakeFiles/edit_cache.dir

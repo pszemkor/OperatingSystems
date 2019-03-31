@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -O2  -rdynamic CMakeFiles/catcher.dir/catcher.c.o  -o catcher 
