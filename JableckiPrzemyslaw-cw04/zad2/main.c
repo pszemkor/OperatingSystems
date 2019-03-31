@@ -14,16 +14,36 @@
 #include "utills.h"
 
 static int switch_ = 1;
+pid_state_t *pids_global;
+int global_size;
 
 void handler_stop(int signum)
 {
     switch_ = 0;
-    printf("otrzymalem sygnal: %d switch: %d \n", signum, switch_);
+    printf("otrzymalem sygnal: %d  \n", signum);
 }
 void handler_start(int signum)
 {
     switch_ = 1;
-    printf("otrzymalem sygnal: %d switch: %d \n", signum, switch_);
+    printf("otrzymalem sygnal: %d \n", signum);
+}
+
+void sigint_handler(int signum)
+{
+    int i;
+    for (i = 0; i < global_size; i++)
+    {
+        kill(pids_global[i].pid, SIGINT);
+    }
+    waitpid(pids_global[i].pid, NULL, 0);
+    struct rusage usage;
+    getrusage(RUSAGE_CHILDREN, &usage);
+    printf("system time: %2ld[s]\n", usage.ru_stime.tv_sec);
+    printf("system time: %2ld[us]\n", usage.ru_stime.tv_usec);
+    printf("user time: %2ld[s]\n", usage.ru_utime.tv_sec);
+    printf("user time: %2ld [s]\n", usage.ru_utime.tv_usec);
+
+    exit(0);
 }
 
 int make_backups(size_t freq, struct stat st, time_t last_modification,
@@ -43,10 +63,10 @@ int make_backups(size_t freq, struct stat st, time_t last_modification,
 
     while (1)
     {
-       sleep(1);
+        sleep(1);
         while (switch_)
         {
-            //printf("dzialam, a to moje pid: %d i mojego rodzica i switch: %d, %d \n", getpid(), getppid(), switch_);
+            printf("dzialam, a to moje pid: %d i mojego rodzica %d \n", getpid(), getppid());
 
             if (stat(file_from_list_path, &st) == -1)
             {
@@ -82,87 +102,125 @@ int make_backups(size_t freq, struct stat st, time_t last_modification,
     return changed_files;
 }
 
+void start_all(pid_state_t *pids, int size)
+{
+    int i;
+    for (i = 0; i < size; i++)
+    {
+        pids[i].stoppped = 0;
+        kill(pids[i].pid, SIGUSR2);
+    }
+}
+void stop_all(pid_state_t *pids, int size)
+{
+    int i;
+    for (i = 0; i < size; i++)
+    {
+        pids[i].stoppped = 1;
+        kill(pids[i].pid, SIGUSR1);
+    }
+}
+
+void stop(pid_state_t *pids, int size, int pid)
+{
+    int found = 0;
+    int i;
+    for (i = 0; i < size; i++)
+    {
+        if (pids[i].pid == pid)
+        {
+            pids[i].stoppped = 1;
+            kill(pid, SIGUSR1);
+            found = 1;
+        }
+    }
+    if (!found)
+    {
+        printf("given pid does not exist or is not monitoring any file right now \n");
+    }
+}
+
+void start(pid_state_t *pids, int size, int pid)
+{
+    int found = 0;
+    int i;
+    for (i = 0; i < size; i++)
+    {
+        if (pids[i].pid == pid)
+        {
+            pids[i].stoppped = 0;
+            kill(pid, SIGUSR2);
+            found = 1;
+        }
+    }
+    if (!found)
+    {
+        printf("given pid does not exist or is not monitoring any file right now \n");
+    }
+}
+
+void list(pid_state_t *pids, int size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        if (pids[i].stoppped == 0)
+            printf("working: %d\n", pids[i].pid);
+    }
+}
+
 int handle_commands(pid_state_t *pids, int size)
 {
+    pids_global = pids;
+    global_size = size;
     char buffer[255];
+    signal(SIGINT, sigint_handler);
     while (1)
     {
-        fgets(buffer, 255, stdin);
+        if (!fgets(buffer, 255, stdin))
+        {
+            fprintf(stderr, "fgets problem \n");
+            exit(1);
+        };
         if (!strncmp(buffer, "START ALL", 8))
         {
-
-            int i;
-            for (i = 0; i < size; i++)
-            {
-                pids[i].stoppped = 0;
-                kill(pids[i].pid, SIGUSR2);
-            }
+            start_all(pids, size);
         }
         else if (!strncmp(buffer, "STOP ALL", 7))
         {
-            int i;
-            for (i = 0; i < size; i++)
-            {
-                pids[i].stoppped = 1;
-                kill(pids[i].pid, SIGUSR1);
-            }
+            stop_all(pids, size);
         }
         else if (!strncmp(buffer, "STOP", 4))
         {
             int pid = convert_to_num(buffer + 5);
             printf("pid: %d\n", pid);
-            int found = 0;
-            int i;
-            for (i = 0; i < size; i++)
-            {
-                if (pids[i].pid == pid)
-                {
-                    pids[i].stoppped = 1;
-                    kill(pid, SIGUSR1);
-                    found = 1;
-                }
-            }
-            if (!found)
-            {
-                printf("given pid does not exist or is not monitoring any file right now \n");
-            }
+            stop(pids, size, pid);
         }
         else if (!strncmp(buffer, "START", 4))
         {
             int pid = convert_to_num(buffer + 5);
             printf("pid: %d\n", pid);
-            int found = 0;
-            int i;
-            for (i = 0; i < size; i++)
-            {
-                if (pids[i].pid == pid)
-                {
-                    pids[i].stoppped = 0;
-                    kill(pid, SIGUSR2);
-                    found = 1;
-                }
-            }
-            if (!found)
-            {
-                printf("given pid does not exist or is not monitoring any file right now \n");
-            }
+            start(pids, size, pid);
         }
         else if (!strncmp(buffer, "END", 3))
         {
             int i;
             for (i = 0; i < size; i++)
             {
-                kill(pids[i].pid, SIGTERM);
+                kill(pids[i].pid, SIGINT);
             }
+            waitpid(pids[i].pid, NULL, 0);
+            struct rusage usage;
+            getrusage(RUSAGE_CHILDREN, &usage);
+            printf("system time: %2ld[s]\n", usage.ru_stime.tv_sec);
+            printf("system time: %2ld[us]\n", usage.ru_stime.tv_usec);
+            printf("user time: %2ld[s]\n", usage.ru_utime.tv_sec);
+            printf("user time: %2ld [s]\n", usage.ru_utime.tv_usec);
+
             return 1;
         }
         else if (!strncmp(buffer, "LIST", 4))
         {
-            for (int i = 0; i < size; i++)
-            {
-                if (pids[i].stoppped == 0)
-                    printf("working: %d\n", pids[i].pid);
-            }
+            list(pids, size);
         }
         else
         {
