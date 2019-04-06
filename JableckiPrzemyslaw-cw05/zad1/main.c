@@ -77,8 +77,8 @@ program_t **parse_programs(char *line, program_t **programs, int *prog_index) {
             (*prog_index)++;
 
         } else {
-            strncpy(programs[*prog_index ]
-                            ->arguments[arg_index++], token, MAX_ARG_LENGTH);
+            strcpy(programs[*prog_index ]
+                            ->arguments[arg_index++], token);
             programs[*prog_index ]->
                     arg_count = arg_index;
         }
