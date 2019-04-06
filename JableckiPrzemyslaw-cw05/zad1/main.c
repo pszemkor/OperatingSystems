@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/wait.h>
 
 #define MAX_PROGS_IN_LINE 30
@@ -73,30 +74,16 @@ program_t **parse_programs(char *line, program_t **programs, int *prog_index) {
 //didn't work without second condition in if statement :>
         if (token[0] == '|' && token[1] == '\0') {
             arg_index = 0;
+            (*prog_index)++;
 
         } else {
-            if (!arg_index)
-                (*prog_index)++;
-
-            strncpy(programs[*prog_index - 1]
+            strncpy(programs[*prog_index ]
                             ->arguments[arg_index++], token, MAX_ARG_LENGTH);
-            programs[*prog_index - 1]->
+            programs[*prog_index ]->
                     arg_count = arg_index;
         }
         token = strtok(NULL, " \n");
     }
-
-    (*prog_index)--;
-    //       to check whether everything fine in array ;)
-//    int i;
-//    for( i = 0; i <= *prog_index; i++){
-//        printf("i: %d \n",i);
-//        for(int j =0; j < programs[i]->arg_count; j++){
-//            printf("j %d\n",j);
-//            printf("program %d argument %d : %s\n", i, j, programs[i]->arguments[j]);
-//        }
-//    }
-//    printf("***********************************************************\n");
     return programs;
 }
 
@@ -113,6 +100,14 @@ void delete_array(program_t** programs){
     free(programs);
 }
 
+
+void delete_list(node_t* head){
+    while(head){
+        node_t* to_delete = head;
+        head = head->next;
+        free(to_delete);
+    }
+}
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {
@@ -139,15 +134,7 @@ int main(int argc, char *argv[]) {
     //start reading lines of linux commands with |
     while ((read = getline(&line, &len, fp)) != -1) {
         int prog_index = -1;
-        programs = parse_programs(line, programs, &prog_index);
-
-//        for(int k =0 ; k<= prog_index; k++){
-//            printf("argcount for k = %d is %d \n",k,programs[k]->arg_count);
-//            for(int m = 0; m < programs[k]->arg_count; m++){
-//                printf("argument: %s \n", programs[k]->arguments[m]);
-//            }
-//        }
-//        printf("***********************************\n");
+        programs = parse_programs(line, programs, &prog_index);;
 
         int fd_prev[2];
         int fd_curr[2];
@@ -205,6 +192,7 @@ int main(int argc, char *argv[]) {
         free(line);
 
     delete_array(programs);
+    delete_list(head);
 
     return 0;
 }
