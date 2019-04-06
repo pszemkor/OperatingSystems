@@ -57,7 +57,11 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
 
-        fread(date_buf, sizeof(char),BUFF_SIZE,p);
+        int f = fread(date_buf, sizeof(char),DATE_SIZE,p);
+        if ( f == EOF){
+            fprintf(stderr, "fread error\n");
+            exit(EXIT_FAILURE);
+        }
         pclose(p);
         sprintf(buf,"DATE: %s PID: %d",date_buf,getpid());
         // printf("%s\n",buf);
