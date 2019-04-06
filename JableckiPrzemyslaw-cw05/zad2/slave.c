@@ -42,9 +42,9 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "wrong type of second argument, integer is required\n");
         exit(EXIT_FAILURE);
     }
-    printf("my pid: %d\n", getpid());
-    printf("N: %d\n", N);
-    printf("fifo path: %s\n",fifo_path);
+    // printf("my pid: %d\n", getpid());
+    // printf("N: %d\n", N);
+    // printf("fifo path: %s\n",fifo_path);
 
     int i;
     char date_buf[DATE_SIZE];
@@ -59,9 +59,8 @@ int main(int argc, char *argv[]) {
 
         fread(date_buf, sizeof(char),BUFF_SIZE,p);
         pclose(p);
-        date_buf[strlen(date_buf)-1]='\0';
         sprintf(buf,"DATE: %s PID: %d",date_buf,getpid());
-        printf("%s\n",buf);
+        // printf("%s\n",buf);
 
         if(write(fd,buf,BUFF_SIZE) < 0){
             fprintf(stderr, "write error\n");
