@@ -1,0 +1,31 @@
+*.cbp
+*.d
+.idea
+*.cmake
+*.tar.gz
+.vscode
+main
+sender
+catcher
+slave
+master
+    #precompiled headers:
+*.gch
+*.pch
+   # Object files
+*.o
+*.ko
+*.obj
+*.elf
+    #executable:
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+    # libraries: 
+*.lib
+*.a
+*.la
+*.lo
