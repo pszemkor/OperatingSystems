@@ -49,7 +49,7 @@ void push(node_t **head_ref, pid_t new_pid) { // at the end
 }
 
 program_t **prepare_array() {
-    program_t **programs =malloc(sizeof(program_t *) * MAX_PROGS_IN_LINE);
+    program_t **programs = malloc(sizeof(program_t *) * MAX_PROGS_IN_LINE);
     int i;
     for (i = 0; i < MAX_PROGS_IN_LINE; i++) {
         programs[i] = malloc(sizeof(program_t));
@@ -77,9 +77,9 @@ program_t **parse_programs(char *line, program_t **programs, int *prog_index) {
             (*prog_index)++;
 
         } else {
-            strcpy(programs[*prog_index ]
-                            ->arguments[arg_index++], token);
-            programs[*prog_index ]->
+            strcpy(programs[*prog_index]
+                           ->arguments[arg_index++], token);
+            programs[*prog_index]->
                     arg_count = arg_index;
         }
         token = strtok(NULL, " \n");
@@ -87,11 +87,11 @@ program_t **parse_programs(char *line, program_t **programs, int *prog_index) {
     return programs;
 }
 
-void delete_array(program_t** programs){
+void delete_array(program_t **programs) {
     int i;
     for (i = 0; i < MAX_PROGS_IN_LINE; i++) {
         int j;
-        for (j = 0; j < MAX_ARGS_IN_PROG; j++){
+        for (j = 0; j < MAX_ARGS_IN_PROG; j++) {
             free(programs[i]->arguments[j]);
         }
         free(programs[i]->arguments);
@@ -101,13 +101,14 @@ void delete_array(program_t** programs){
 }
 
 
-void delete_list(node_t* head){
-    while(head){
-        node_t* to_delete = head;
+void delete_list(node_t *head) {
+    while (head) {
+        node_t *to_delete = head;
         head = head->next;
         free(to_delete);
     }
 }
+
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {
