@@ -22,17 +22,13 @@
 #define SPLITTER ":"
 #define COMMAND_TYPES 11
 
-typedef struct msg {
+struct msg {
     long mType;
     pid_t sender;
     char msg[MAX_MSG_LENGTH];
-} message_t;
-
+};
 
 #define MSGSZ sizeof(struct msg)
-
-
-
 
 enum MSG_COMMAND {
     STOP = 1L,
@@ -46,9 +42,15 @@ enum MSG_COMMAND {
     _2FRIENDS = 9L,
     _2ALL = 10L,
 };
+
 key_t getServerQueueKey();
+
 key_t getClientQueueKey();
+
 void raise_error(char *msg);
+
+int convert_to_num(char *given_string);
 
 
 #endif //SIMPLE_CHAT_CHAT_H
+
