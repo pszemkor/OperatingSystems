@@ -7,27 +7,31 @@
 #include <fcntl.h>
 #include "chat.h"
 
-//signatures of available commands
+//signatures of available server commands
 void init(int clientPID, char msg[MAX_MSG_LENGTH]);
+
 void echo(int clientID, char msg[MAX_MSG_LENGTH]);
+
 void stop(int clientID);
+
 void list(int clientID);
+
 void friends(int clientID, char msg[MAX_MSG_LENGTH]);
+
 void add(int clientID, char msg[MAX_MSG_LENGTH]);
+
 void delete(int clientID, char msg[MAX_MSG_LENGTH]);
+
 void _2all(int clientID, char msg[MAX_MSG_LENGTH]);
+
 void _2friends(int clientID, char msg[MAX_MSG_LENGTH]);
+
 void _2one(int clientID, char msg[MAX_MSG_LENGTH]);
 
 //utills
-void executeCommands(char* msg) ;
+void executeCommands(char *msg);
 
 void sendMessage(enum MSG_COMMAND type, char msg[MAX_MSG_LENGTH], int clientID);
-
-
-
-int working = 1;
-mqd_t serverQueueID = -1;
 
 typedef struct {
     int clientQueue;
@@ -37,6 +41,9 @@ typedef struct {
 } client_t;
 
 client_t clients[MAX_CLIENTS];
+int working = 1;
+mqd_t serverQueueID = -1;
+int working_clients = 0;
 
 void exitHandler(int signo) {
 
@@ -50,7 +57,7 @@ void exitHandler(int signo) {
     if (mq_close(serverQueueID) == -1) raise_error("cannot close queue \n");
     if (mq_unlink(SERVER_NAME) == -1) raise_error("cannot delete queue \n");
     else
-        printf("Server queue closed and deleted successfully \n");
+        printf("\033[1;32mServer:\033[0m Server queue closed and deleted successfully \n");
     exit(EXIT_SUCCESS);
 }
 
@@ -60,7 +67,6 @@ int main() {
         clients[i].clientQueue = -1;
         clients[i].curr_friends_number = 0;
     }
-
 
     struct mq_attr queue_attr;
     queue_attr.mq_maxmsg = MAX_QUEUE_SIZE;
@@ -74,106 +80,98 @@ int main() {
     sigaction(SIGINT, &act, NULL);
 
     if ((serverQueueID = mq_open(SERVER_NAME, O_RDONLY | O_CREAT | O_EXCL, 0666, &queue_attr)) == -1)
-        raise_error("cannot create new queue \n");
-
+        raise_error("\033[1;32mServer:\033[0m cannot create new queue \n");
 
     char content[MAX_MSG_LENGTH];
 
     while (working) {
-
         if (mq_receive(serverQueueID, content, MAX_MSG_LENGTH, NULL) == -1)
-            raise_error("cannot receive message \n");
-//        else
-//            printf("msg: %s \n", content);
+            raise_error("\033[1;32mServer:\033[0m cannot receive message \n");
         executeCommands(content);
     }
 
     if (mq_close(serverQueueID) == -1) raise_error("cannot close queue \n");
     if (mq_unlink(SERVER_NAME) == -1) raise_error("cannot delete queue \n");
     else
-        printf("Server queue closed and  deleted successfully \n");
-    exit(EXIT_SUCCESS);
+        printf("\033[1;32mServer:\033[0m Server queue closed and  deleted successfully \n");
+
 
     return 0;
 }
 
-void executeCommands(char* msg) {
+void executeCommands(char *msg) {
 
+    printf("\033[1;32mServer:\033[0m Server has just got request!\n");
+    long type = convert_to_num(strtok(msg, ";"));
+    long sender = convert_to_num(strtok(NULL, ";"));
 
-    printf("Server got request %s \n", msg);
-    long type = convert_to_num(strtok(msg,";"));
-    //printf("type: %ld\n", type);
-    long sender = convert_to_num(strtok(NULL,";"));
-    //printf("sender: %ld \n",sender);
-    //printf("message: %s \n",strtok(NULL,";"));
     if (type == STOP) {
         stop(sender);
     } else if (type == INIT) {
-        init(sender, strtok(NULL,";"));
+        init(sender, strtok(NULL, ";"));
     } else if (type == ECHO) {
-        echo(sender, strtok(NULL,";"));
+        echo(sender, strtok(NULL, ";"));
     } else if (type == FRIENDS) {
-        friends(sender, strtok(NULL,";"));
+        friends(sender, strtok(NULL, ";"));
     } else if (type == LIST) {
         list(sender);
-    }else if (type == _2ALL) {
-        _2all(sender, strtok(NULL,";"));
+    } else if (type == _2ALL) {
+        _2all(sender, strtok(NULL, ";"));
     } else if (type == _2ONE) {
-        _2one(sender, strtok(NULL,";"));
+        _2one(sender, strtok(NULL, ";"));
     } else if (type == _2FRIENDS) {
-        _2friends(sender,strtok(NULL,";"));
+        _2friends(sender, strtok(NULL, ";"));
     } else if (type == ADD) {
-        add(sender,strtok(NULL,";"));
+        add(sender, strtok(NULL, ";"));
     } else if (type == DEL) {
-        delete(sender, strtok(NULL,";"));
-   }else {
-        raise_error("unknown message type \n");
+        delete(sender, strtok(NULL, ";"));
+    } else {
+        raise_error("\033[1;32mServer:\033[0m unknown message type \n");
     }
 }
 
 void sendMessage(enum MSG_COMMAND type, char msg[MAX_MSG_LENGTH], int clientID) {
     if (clientID >= MAX_CLIENTS || clientID < 0 || clients[clientID].clientQueue < 0) {
-        raise_error("cannot send message to this client \n");
+        raise_error("\033[1;32mServer:\033[0m cannot send message to this client \n");
     }
 
-    if (mq_send(clients[clientID].clientQueue,msg, MAX_MSG_LENGTH, cmdPriority(type)))
-        raise_error("cannot send message to client\n");
+    if (mq_send(clients[clientID].clientQueue, msg, MAX_MSG_LENGTH, cmdPriority(type)))
+        raise_error("\033[1;32mServer:\033[0m cannot send message to client\n");
 }
 
 void init(int clientPID, char msg[MAX_MSG_LENGTH]) {
-    int id;
-;
+    int id;;
     for (id = 0; id < MAX_CLIENTS; id++) {
         if (clients[id].clientQueue == -1)
             break;
     }
-    printf("got msg:, %s \n", msg);
+//    printf("got msg:, %s \n", msg);
     if (id >= MAX_CLIENTS)
-        raise_error("too many clients \n");
+        raise_error("\033[1;32mServer:\033[0m too many clients \n");
 
     if ((clients[id].clientQueue = mq_open(msg, O_WRONLY)) == -1)
-        raise_error("cannot open queue \n");
+        raise_error("\033[1;32mServer:\033[0m cannot open queue \n");
 
     clients[id].pid = clientPID;
     clients[id].curr_friends_number = 0;
 
-    printf("New client initialized, his id: %d and pid: %d\n", id, clientPID);
+    printf("\033[1;32mServer:\033[0m New client initialized, his id: %d and pid: %d\n", id, clientPID);
 
     char toClient[MAX_MSG_LENGTH];
     sprintf(toClient, "%d", id);
-
+    working_clients++;
     sendMessage(INIT, toClient, id);
 
 }
 
 void echo(int clientID, char msg[MAX_MSG_LENGTH]) {
-    printf("Echo for client: %d is %s\n", clientID, msg);
+    printf("\033[1;32mServer:\033[0m Echo for client: %d is %s\n", clientID, msg);
     char response[MAX_MSG_LENGTH];
     char date[64];
     FILE *f = popen("date", "r");
     int check = fread(date, sizeof(char), 31, f);
-    if(check == EOF )
-        raise_error("cannot read date \n");
+    if (check == EOF)
+        raise_error("\033[1;32mServer:\033[0m cannot read date \n");
     pclose(f);
     sprintf(response, "%s date: %s", msg, date);
     //printf("what i sent back: %s \n", response);
@@ -183,17 +181,24 @@ void echo(int clientID, char msg[MAX_MSG_LENGTH]) {
 //TO VERIFY
 void stop(int clientID) {
 
-    if(clientID >= 0 && clientID < MAX_CLIENTS){
+    if (clientID >= 0 && clientID < MAX_CLIENTS) {
+        if (mq_close(clients[clientID].clientQueue) == -1)
+            raise_error("\033[1;32mServer:\033[0m cannot close client's queue \n");
         clients[clientID].clientQueue = -1;
         clients[clientID].curr_friends_number = 0;
         for (int i = 0; i < MAX_CLIENTS; i++)
             clients[clientID].friends[i] = -1;
+        working_clients--;
+        printf("\033[1;32mServer:\033[0m Working clients: %d \n", working_clients);
+        if (working_clients == 0) {
+            kill(getpid(), SIGINT);
+        }
     }
 
 }
 
 void list(int clientID) {
-    printf("List will be sent to client with id: %d \n", clientID);
+    printf("\033[1;32mServer:\033[0m List will be sent to client with id: %d \n", clientID);
     char response[MAX_MSG_LENGTH], buf[MAX_MSG_LENGTH];
     strcpy(response, "");
     int i = 0;
@@ -213,7 +218,7 @@ void makeFriendsList(int clientID, char friends[MAX_MSG_LENGTH]) {
         //to improve:
         int f = convert_to_num(friend);
         if (f < 0 || f >= MAX_CLIENTS || f < 0 || clientID == f) {
-            printf("friend: %s cannot be added (wrong type or value)\n", friend);
+            printf("\033[1;32mServer:\033[0m friend: %s cannot be added (wrong type or value)\n", friend);
         }
 
         int found = 0;
@@ -224,11 +229,11 @@ void makeFriendsList(int clientID, char friends[MAX_MSG_LENGTH]) {
             if (f == clients[clientID].friends[i]) {
                 found = 1;
             }
-        if(!found){
+        if (!found) {
             clients[clientID].friends[clients[clientID].curr_friends_number++] = f;
-            printf("\tFriend: %d has just been added \n", f);
-        }else{
-            printf("\tFriend: %d has been already added \n", f);
+            printf("\033[1;32mServer:\033[0m \tFriend: %d has just been added \n", f);
+        } else {
+            printf("\033[1;32mServer:\033[0m \tFriend: %d has been already added \n", f);
         }
         friend = strtok(NULL, SPLITTER);
     }
@@ -239,7 +244,7 @@ void friends(int clientID, char msg[MAX_MSG_LENGTH]) {
         raise_error("wrong client \n");
     }
 
-    printf("server will prepare new list of client's firends \n");
+    printf("\033[1;32mServer:\033[0m server will prepare new list of client's firends \n");
 
     char friends[MAX_MSG_LENGTH];
     int state = sscanf(msg, "%s", friends);
@@ -300,25 +305,25 @@ void delete(int clientID, char msg[MAX_MSG_LENGTH]) {
         }
     }
 
-    printf("\tfriends after deleting: \n");
+    printf("\033[1;32mServer:\033[0m \tfriends after deleting: \n");
     int j;
-    for(j = 0; j < clients[clientID].curr_friends_number; j++){
-        printf("\t ID: %d\n", clients[clientID].friends[j]);
+    for (j = 0; j < clients[clientID].curr_friends_number; j++) {
+        printf("\033[1;32mServer:\033[0m \t ID: %d\n", clients[clientID].friends[j]);
     }
 }
 
 void _2all(int clientID, char msg[MAX_MSG_LENGTH]) {
-    printf("Server will send messages to all clients \n");
+    printf("\033[1;32mServer:\033[0m Server will send messages to all clients \n");
 
     char response[MAX_MSG_LENGTH];
     char date[32];
     FILE *p = popen("date", "r");
     int check = fread(date, sizeof(char), 31, p);
-    if(check == EOF )
+    if (check == EOF)
         raise_error("cannot read date \n");
     pclose(p);
 
-    sprintf(response, "%d;message: %s from: %d date: %s \n",_2ALL, msg, clientID, date);
+    sprintf(response, "%d;message: %s from: %d date: %s \n", _2ALL, msg, clientID, date);
 
     int i;
     for (i = 0; i < MAX_CLIENTS; i++) {
@@ -330,7 +335,7 @@ void _2all(int clientID, char msg[MAX_MSG_LENGTH]) {
 }
 
 void _2one(int clientID, char msg[MAX_MSG_LENGTH]) {
-    printf("Server will send messages to one client \n");
+    printf("\033[1;32mServer:\033[0m Server will send messages to one client \n");
     char date[32];
 
     char content[MAX_MSG_LENGTH];
@@ -339,20 +344,20 @@ void _2one(int clientID, char msg[MAX_MSG_LENGTH]) {
     int addressee;
     FILE *f = popen("date", "r");
     int check = fread(date, sizeof(char), 31, f);
-    if(check == EOF )
+    if (check == EOF)
         raise_error("cannot read date \n");
     pclose(f);
     int x = sscanf(msg, "%i %s", &addressee, content);
     if (x != 2)
         raise_error("cannot elicit address and content of message\n");
-    sprintf(response, "%d;message %s from: %d date: %s \n",_2ONE, content, clientID, date);
+    sprintf(response, "%d;message %s from: %d date: %s \n", _2ONE, content, clientID, date);
 
     if (addressee >= MAX_CLIENTS || addressee < 0 || clients[addressee].clientQueue < 0) {
         raise_error("wrong addressee \n");
     }
 
-    if(addressee == clientID){
-        printf("cannot send message to yourself \n");
+    if (addressee == clientID) {
+        printf("\033[1;32mServer:\033[0m cannot send message to yourself \n");
         return;
     }
 
@@ -363,19 +368,19 @@ void _2one(int clientID, char msg[MAX_MSG_LENGTH]) {
 }
 
 void _2friends(int clientID, char msg[MAX_MSG_LENGTH]) {
-    printf("Server will send messages to friends of client \n");
+    printf("\033[1;32mServer:\033[0m Server will send messages to friends of client \n");
     char response[MAX_MSG_LENGTH];
     char date[64];
     FILE *f = popen("date", "r");
     int check = fread(date, sizeof(char), 31, f);
-    if(check == EOF )
+    if (check == EOF)
         raise_error("cannot read date \n");
     pclose(f);
-    sprintf(response, "%d;message: %s from: %d date: %s\n",_2ONE, msg, clientID, date);
-    int i = 0;
-    for (; i < clients[clientID].curr_friends_number; i++) {
+    sprintf(response, "%d;message: %s from: %d date: %s\n", _2ONE, msg, clientID, date);
+    int i;
+    for (i = 0; i < clients[clientID].curr_friends_number; i++) {
         int addressee = clients[clientID].friends[i];
-        if(clients[clientID].friends[i] == -1)
+        if (clients[clientID].friends[i] == -1)
             continue;
         if (addressee >= MAX_CLIENTS || addressee < 0 || clients[addressee].clientQueue < 0) {
             raise_error("wrong addressee \n");
@@ -383,8 +388,8 @@ void _2friends(int clientID, char msg[MAX_MSG_LENGTH]) {
         printf("%i\t", addressee);
         sendMessage(_2FRIENDS, response, addressee);
         kill(clients[addressee].pid, SIGRTMIN);
-
     }
     printf("\n");
 }
+
 

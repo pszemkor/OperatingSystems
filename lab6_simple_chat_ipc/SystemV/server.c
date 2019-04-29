@@ -37,6 +37,7 @@ int convert_to_num(char *given_string) {
 
 int working = 1;
 int serverQueueID = -1;
+int workingClients = 0;
 
 typedef struct {
     int clientQueue;
@@ -161,6 +162,7 @@ void init(int clientPID, char msg[MAX_MSG_LENGTH]) {
     char toClient[MAX_MSG_LENGTH];
     sprintf(toClient, "%d", id);
     sendMessage(INIT, toClient, id);
+    workingClients++;
 
 
 }
@@ -185,7 +187,13 @@ void stop(int clientID) {
         clients[clientID].curr_friends_number = 0;
         for (int i = 0; i < MAX_CLIENTS; i++)
             clients[clientID].friends[i] = -1;
+        workingClients--;
+        if(workingClients == 0){
+            kill(getpid(), SIGINT);
+        }
     }
+
+
 
 }
 
@@ -385,4 +393,5 @@ void _2friends(int clientID, char msg[MAX_MSG_LENGTH]) {
     }
     printf("\n");
 }
+
 

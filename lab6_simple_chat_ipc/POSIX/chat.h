@@ -23,7 +23,7 @@
 #define COMMAND_TYPES 11
 
 #define MAX_QUEUE_SIZE 10
-#define SERVER_NAME "/serverQueue12"
+#define SERVER_NAME "/serverQueue"
 
 typedef struct msg {
     long mType;
@@ -57,3 +57,4 @@ int convert_to_num(char *given_string);
 
 
 #endif //SIMPLE_CHAT_CHAT_H
+

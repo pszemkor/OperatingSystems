@@ -7,7 +7,7 @@
 
 void raise_error(char *msg){
     fprintf(stderr,"%s",msg);
-    exit(1);
+    kill(getpid(), SIGINT);
 }
 int convert_to_num(char *given_string) {
     if (!given_string) {
@@ -23,13 +23,13 @@ int convert_to_num(char *given_string) {
 }
 unsigned cmdPriority(enum MSG_COMMAND cmd){
     if(cmd == STOP){
-        return 1;
-    }else if(cmd == LIST){
-        return 2;
-    }else if(cmd == FRIENDS ){
-        return 3;
-    }else{
         return 4;
+    }else if(cmd == LIST){
+        return 3;
+    }else if(cmd == FRIENDS ){
+        return 2;
+    }else{
+        return 1;
     }
 }
 
@@ -55,4 +55,5 @@ struct msg* parse(char* message, int* addressee){
     msg->sender = sender;
     return msg;
 }
+
 

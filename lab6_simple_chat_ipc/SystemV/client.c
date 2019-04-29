@@ -12,6 +12,7 @@ int clientQueue = -1;
 int clientID = -1;
 int working = 1;
 
+
 void send(enum MSG_COMMAND type, char content[MAX_MSG_LENGTH]);
 void executeRead(char * args);
 int executeCommands(FILE * file);
@@ -25,6 +26,10 @@ void _2_one(char arguments[MAX_MSG_LENGTH]);
 void _2_friends(char arguments[MAX_MSG_LENGTH]);
 void _2_all(char arguments[MAX_MSG_LENGTH]);
 void init();
+
+void finish(){
+
+}
 
 void communicationHandler(int signo){
     struct msg msg;
@@ -47,6 +52,7 @@ void _exit(int signo){
     else{
         printf("queue deleted successfully ");
     }
+    stop();
     exit(EXIT_SUCCESS);
 }
 
