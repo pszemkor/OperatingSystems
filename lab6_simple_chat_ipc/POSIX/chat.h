@@ -23,7 +23,7 @@
 #define COMMAND_TYPES 11
 
 #define MAX_QUEUE_SIZE 10
-#define SERVER_NAME "/serverQueue"
+#define SERVER_NAME "/serverQueue11111111"
 
 typedef struct msg {
     long mType;

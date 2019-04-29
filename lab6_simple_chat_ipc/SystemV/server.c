@@ -82,6 +82,7 @@ int main() {
         if (msgrcv(serverQueueID, &msgBuff, MSGSZ, -COMMAND_TYPES, 0) == -1)
             raise_error("cannot receive message \n");
         executeCommands(&msgBuff);
+sleep(1);
     }
 
     if (msgctl(serverQueueID, IPC_RMID, NULL) == -1)
@@ -185,6 +186,7 @@ void stop(int clientID) {
         for (int i = 0; i < MAX_CLIENTS; i++)
             clients[clientID].friends[i] = -1;
         workingClients--;
+        printf("\033[1;32mServer:\033[0m Number of working clients: %d \n",workingClients);
         if (workingClients == 0) {
             kill(getpid(), SIGINT);
         }

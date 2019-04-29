@@ -1,7 +1,3 @@
-//
-// Created by przjab98 on 27.04.19.
-//
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -190,12 +186,18 @@ void friends(char arguments[MAX_MSG_LENGTH]) {
     int args_no = sscanf(arguments, "%s %s", command, text);
     if (args_no == EOF || args_no == 0)
         raise_error("cannot elicit arguments \n");
-
-
     char toServer[MAX_MSG_LENGTH];
-    sprintf(toServer, "%d;%d;%s", FRIENDS, clientID, text);
+    if(args_no == 1){
+        sprintf(toServer, "%d;%d;%s", FRIENDS, clientID, "n");
 //    printf("im gonna send: %s \n", toServer);
-    send(FRIENDS, toServer);
+        send(FRIENDS, toServer);
+    }else{
+        sprintf(toServer, "%d;%d;%s", FRIENDS, clientID, text);
+//    printf("im gonna send: %s \n", toServer);
+        send(FRIENDS, toServer);
+    }
+
+
 }
 
 void add(char arguments[MAX_MSG_LENGTH]) {

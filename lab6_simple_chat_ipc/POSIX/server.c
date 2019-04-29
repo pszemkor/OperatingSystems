@@ -88,6 +88,7 @@ int main() {
         if (mq_receive(serverQueueID, content, MAX_MSG_LENGTH, NULL) == -1)
             raise_error("\033[1;32mServer:\033[0m cannot receive message \n");
         executeCommands(content);
+        sleep(1);
     }
 
     if (mq_close(serverQueueID) == -1) raise_error("cannot close queue \n");
@@ -219,6 +220,7 @@ void makeFriendsList(int clientID, char friends[MAX_MSG_LENGTH]) {
         int f = convert_to_num(friend);
         if (f < 0 || f >= MAX_CLIENTS || f < 0 || clientID == f) {
             printf("\033[1;32mServer:\033[0m friend: %s cannot be added (wrong type or value)\n", friend);
+            return;
         }
 
         int found = 0;
@@ -258,8 +260,12 @@ void friends(int clientID, char msg[MAX_MSG_LENGTH]) {
     for (i = 0; i < MAX_CLIENTS; i++) {
         clients[clientID].friends[i] = -1;
     }
+    if(convert_to_num(friends) < 0){
+        printf("\033[1;32mServer:\033[0m Friends list clean \n");
+    }else{
+        makeFriendsList(clientID, friends);
+    }
 
-    makeFriendsList(clientID, friends);
 }
 
 void add(int clientID, char msg[MAX_MSG_LENGTH]) {
