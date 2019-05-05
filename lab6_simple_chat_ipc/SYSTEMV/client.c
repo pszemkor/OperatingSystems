@@ -49,7 +49,7 @@ void communicationHandler(int signo) {
         printf("the message from a client has come: %s \n", msg.msg);
     } else if (msg.mType == STOP) {
         if (msgctl(clientQueue, IPC_RMID, NULL) == -1)
-            raise_error("cannot delete queue \n");
+            raise_error(" ");
         exit(EXIT_SUCCESS);
     }
 
@@ -57,12 +57,14 @@ void communicationHandler(int signo) {
 
 void _exit(int signo) {
     if (msgctl(clientQueue, IPC_RMID, NULL) == -1)
-        raise_error("cannot delete queue \n");
+        raise_error("\n");
     else {
         printf("\033[1;32mClient:\033[0m queue deleted successfully ");
     }
     stop();
+    sleep(1);
     exit(EXIT_SUCCESS);
+    //return;
 }
 
 
@@ -81,10 +83,12 @@ int main() {
         raise_error("cannot open client queue \n");
     init();
     printf("\033[1;32mClient:\033[0m Server queue ID:\t%d \n", serverQueue);
-    while (working && executeCommands(fdopen(STDIN_FILENO, "r")) == 0 );
+    while (working  ){
+executeCommands(fdopen(STDIN_FILENO, "r"));
+};
     stop();
     if (msgctl(clientQueue, IPC_RMID, NULL) == -1)
-        raise_error("cannot delete queue \n");
+        raise_error("\n");
     else
         printf("\033[1;32mClient:\033[0m Queue deleted successfully ");
 
@@ -99,7 +103,7 @@ void send(enum MSG_COMMAND type, char content[MAX_MSG_LENGTH]) {
     msg.sender = clientID;
     //printf("what I sent: %s \n", msg.msg);
     if (msgsnd(serverQueue, &msg, MSGSZ, IPC_NOWAIT) == -1)
-        raise_error("cannot send message to server \n");
+        raise_error("\n");
 }
 
 void init() {
@@ -154,15 +158,25 @@ void list() {
 
 void stop() {
     send(STOP, "");
-}
+        if (msgctl(clientQueue, IPC_RMID, NULL) == -1)
+        raise_error("\n");
+    else
+        printf("\033[1;32mClient:\033[0m Queue deleted successfully ");
+    exit(EXIT_SUCCESS);
 
+}
 void friends(char arguments[MAX_MSG_LENGTH]) {
     char command[MAX_COMMAND_LENGTH];
     char text[MAX_MSG_LENGTH];
     int args_no = sscanf(arguments, "%s %s", command, text);
     if (args_no == EOF || args_no == 0)
         raise_error("cannot elicit arguments \n");
-    send(FRIENDS, text);
+    if(args_no == 1){
+        send(FRIENDS, "n");
+    }else{
+        send(FRIENDS, text);
+    }
+
 }
 
 void add(char arguments[MAX_MSG_LENGTH]) {

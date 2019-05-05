@@ -50,7 +50,9 @@ void exitHandler(int signo) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients[i].clientQueue != -1) {
             //SEND SOME STOP!
-            kill(clients[i].pid, SIGINT);
+            char response[MAX_MSG_LENGTH];
+            sprintf(response, "%d;%s", STOP, "stop");
+            kill(clients[i].pid, SIGRTMIN);
         }
     }
 
@@ -179,7 +181,7 @@ void echo(int clientID, char msg[MAX_MSG_LENGTH]) {
     sendMessage(ECHO, response, clientID);
 }
 
-//TO VERIFY
+
 void stop(int clientID) {
 
     if (clientID >= 0 && clientID < MAX_CLIENTS) {
@@ -260,9 +262,9 @@ void friends(int clientID, char msg[MAX_MSG_LENGTH]) {
     for (i = 0; i < MAX_CLIENTS; i++) {
         clients[clientID].friends[i] = -1;
     }
-    if(convert_to_num(friends) < 0){
+    if (convert_to_num(friends) < 0) {
         printf("\033[1;32mServer:\033[0m Friends list clean \n");
-    }else{
+    } else {
         makeFriendsList(clientID, friends);
     }
 
@@ -395,7 +397,6 @@ void _2friends(int clientID, char msg[MAX_MSG_LENGTH]) {
         sendMessage(_2FRIENDS, response, addressee);
         kill(clients[addressee].pid, SIGRTMIN);
     }
-    printf("\n");
 }
 
 

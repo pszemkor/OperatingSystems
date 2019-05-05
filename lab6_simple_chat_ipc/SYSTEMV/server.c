@@ -50,7 +50,8 @@ void exitHandler(int signo) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients[i].clientQueue != -1) {
             //SEND SOME STOP!
-            kill(clients[i].pid, SIGINT);
+            sendMessage(STOP,"", i);
+            kill(clients[i].pid, SIGRTMIN);
         }
     }
 
@@ -74,7 +75,7 @@ int main() {
     act.sa_flags = 0;
     sigaction(SIGINT, &act, NULL);
 
-    if ((serverQueueID = msgget(getServerQueueKey(), IPC_CREAT | 0666)) == -1)
+    if ((serverQueueID = msgget(getServerQueueKey(), IPC_CREAT  | 0666)) == -1)
         raise_error("cannot create server queue \n");
 
     struct msg msgBuff;
@@ -82,7 +83,7 @@ int main() {
         if (msgrcv(serverQueueID, &msgBuff, MSGSZ, -COMMAND_TYPES, 0) == -1)
             raise_error("cannot receive message \n");
         executeCommands(&msgBuff);
-sleep(1);
+        sleep(1);
     }
 
     if (msgctl(serverQueueID, IPC_RMID, NULL) == -1)
@@ -186,7 +187,7 @@ void stop(int clientID) {
         for (int i = 0; i < MAX_CLIENTS; i++)
             clients[clientID].friends[i] = -1;
         workingClients--;
-        printf("\033[1;32mServer:\033[0m Number of working clients: %d \n",workingClients);
+        printf("\033[1;32mServer:\033[0m Number of working clients: %d \n", workingClients);
         if (workingClients == 0) {
             kill(getpid(), SIGINT);
         }
@@ -217,11 +218,10 @@ void makeFriendsList(int clientID, char friends[MAX_MSG_LENGTH]) {
         int f = convert_to_num(friend);
         if (f < 0 || f >= MAX_CLIENTS || f < 0 || clientID == f) {
             printf("\033[1;32mServer:\033[0m friend: %s cannot be added (wrong type or value)\n", friend);
+            return;
         }
-
         int found = 0;
         int i = 0;
-
         //friends cannot be repeated
         for (; i < clients[clientID].curr_friends_number; i++)
             if (f == clients[clientID].friends[i]) {
@@ -256,8 +256,10 @@ void friends(int clientID, char msg[MAX_MSG_LENGTH]) {
     for (i = 0; i < MAX_CLIENTS; i++) {
         clients[clientID].friends[i] = -1;
     }
-
-    makeFriendsList(clientID, friends);
+    if (convert_to_num(friends) < 0) {
+        printf("\033[1;32mServer:\033[0m List is clean \n");
+    } else
+        makeFriendsList(clientID, friends);
 }
 
 void add(int clientID, char msg[MAX_MSG_LENGTH]) {
@@ -376,7 +378,7 @@ void _2friends(int clientID, char msg[MAX_MSG_LENGTH]) {
     pclose(f);
     sprintf(response, "message: %s from: %d date: %s\n", msg, clientID, date);
     int i;
-    for (i= 0 ; i < clients[clientID].curr_friends_number; i++) {
+    for (i = 0; i < clients[clientID].curr_friends_number; i++) {
         int addressee = clients[clientID].friends[i];
         if (clients[clientID].friends[i] == -1)
             continue;
@@ -389,5 +391,3 @@ void _2friends(int clientID, char msg[MAX_MSG_LENGTH]) {
 
     }
 }
-
-
