@@ -9,14 +9,14 @@
 #include <sys/times.h>
 #include "common.h"
 
-//todo -> print difference in time
-//todo -> add some atexit()
 
 static int semID = -1;
 static int shID = -1;
 struct Queue *assembly_line;
 
 static int packages_on_truck_weight = 0;
+int max_truck_load = -1;
+int got_signal = 0;
 
 void cleaning() {
 
@@ -30,11 +30,34 @@ void cleaning() {
     }
 }
 
-//todo -> wyładować, co zostało!
 
 void signal_handler(int signo) {
 
     printf("Got signal %d\n", signo);
+    if (semctl(semID, 2, SETVAL, 0) == -1)
+        raise_error("Cannot lock the assembly line!");
+
+    while (assembly_line->current_size > 0) {
+
+        struct Package package = peak(assembly_line);
+
+        if (package.weight > max_truck_load - packages_on_truck_weight) {
+
+            print_date_and_message("truck is full");
+            sleep(1);
+            print_date_and_message("new truck has come");
+            packages_on_truck_weight = 0;
+
+        } else {
+            pop(assembly_line);
+            packages_on_truck_weight += package.weight;
+            printf("New package has been loaded, time diff: %f, worker PID: %d, current load: %d \n",
+                   (double) (times(NULL) - package.time) / sysconf(_SC_CLK_TCK), package.workerID,
+                   packages_on_truck_weight);
+
+        }
+
+    }
     exit(EXIT_SUCCESS);
 }
 
@@ -49,7 +72,7 @@ int main(int argc, char *argv[]) {
     if (argc != 4)
         raise_error("wrong amount of arguments");
 
-    int max_truck_load = convert_to_num(argv[1]);
+    max_truck_load = convert_to_num(argv[1]);
     int max_packages_count = convert_to_num(argv[2]);
     int max_assembly_line_load = convert_to_num(argv[3]);
 
