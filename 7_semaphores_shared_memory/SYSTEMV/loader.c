@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
     if (COMMON_KEY == -1)
         raise_error("key problem");
-    shmID = shmget(COMMON_KEY, sizeof(struct Queue) + 20, 0);
+    shmID = shmget(COMMON_KEY, sizeof(struct Queue), 0);
     if (shmID < 0)
         raise_error("Cannot create shared memory");
 
@@ -47,31 +47,24 @@ int main(int argc, char *argv[]) {
         raise_error("Cannot get semaphore");
 
     while (optional_cycles == -1 || optional_cycles > 0) {
+        take_sem(semID,3,1);
+        if (block_full(semID, package_weight) == 0) {
+            char msg[128];
+            sprintf(msg, "Worker %d is loading package of weight: %d", getpid(), package_weight);
 
-        //todo -> set semaphore
+            struct Package package;
+            package.time = print_date_and_message(msg);
+            package.weight = package_weight;
+            package.workerID = getpid();
+            push(assembly_line, package);
+            printf("in queue is: %d packages \n", assembly_line->current_size);
 
-//        take_sem(semID, 0, package_weight);
-        take_sem(semID, 2, 1);
-        block_full(semID, package_weight);
+            release_sem(semID, 2, 1);
+        } else {
+            printf("*********waitin'***********\n");
+        }
 
-        char msg[128];
-        sprintf(msg, "Worker %d is loading package of weight: %d", getpid(), package_weight);
-        struct Package package;
-        package.time = print_date_and_message(msg);
-        package.weight = package_weight;
-        package.workerID = getpid();
-        push(assembly_line, package);
-        printf("free space in queue: %d \n", assembly_line->used_size - assembly_line->current_size);
-        printf("in queue is: %d packages \n", assembly_line->current_size);
-
-
-        //todo ->set semaphore
-        //release_full(semID, package_weight);
         release_sem(semID, 3, 1);
-        release_sem(semID, 2, 1);
-//        release_sem(semID, 1, 1);
-
-
         if (optional_cycles != -1)
             optional_cycles--;
         sleep(1);

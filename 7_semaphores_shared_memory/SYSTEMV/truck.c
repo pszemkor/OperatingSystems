@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/shm.h>
 #include <unistd.h>
+#include <sys/times.h>
 #include "common.h"
 
 //todo -> print difference in time
@@ -24,8 +25,6 @@ void cleaning() {
     }
     if (semID >= 0) {
         assembly_line->current_size = 0;
-        assembly_line->used_size = 0;
-        assembly_line->head = assembly_line->tail = 0;
         shmdt(assembly_line);
         semctl(semID, 0, IPC_RMID);
     }
@@ -65,9 +64,9 @@ int main(int argc, char *argv[]) {
     printf("First empty truck is coming!\n");
 
     //creating shared memory
-    shID = shmget(COMMON_KEY, sizeof(struct Queue) + 20, IPC_EXCL | IPC_CREAT | 0666);
-    if (shID < 0){
-        fprintf(stderr,"Cannot create shared memory");
+    shID = shmget(COMMON_KEY, sizeof(struct Queue), IPC_EXCL | IPC_CREAT | 0666);
+    if (shID < 0) {
+        fprintf(stderr, "Cannot create shared memory");
         exit(EXIT_FAILURE);
     }
 
@@ -75,9 +74,7 @@ int main(int argc, char *argv[]) {
     if (assembly_line == (void *) -1)
         raise_error("Cannot get address for shared memory");
     assembly_line->current_size = 0;
-    assembly_line->head = 0;
-    assembly_line->tail = 0;
-    assembly_line->used_size = max_packages_count;
+    assembly_line->curr_load = 0;
 
     // creating semaphores
     semID = semget(COMMON_KEY, 4, IPC_EXCL | IPC_CREAT | 0666);
@@ -88,38 +85,42 @@ int main(int argc, char *argv[]) {
         raise_error("cannot set initial semaphore value");
     if (semctl(semID, 1, SETVAL, max_packages_count) == -1)
         raise_error("cannot set initial semaphore value");
-    //just to synchronize workers :: look at solution of producent-consumer problem
     if (semctl(semID, 2, SETVAL, 1) == -1)
         raise_error("cannot set initial semaphore value");
-    if (semctl(semID, 3, SETVAL, 0) == -1)
+    if (semctl(semID, 3, SETVAL, 1) == -1)
         raise_error("cannot set initial semaphore value");
-
 
     int flag = 1;
     while (flag) {
-        if (assembly_line->current_size != 0) {
-            //todo -> semaphore
-            take_sem(semID,3,1);
-            //take_sem(semID,2,1);
-            struct Package package = pop(assembly_line);
-            //release_sem(semID,2,1);
-           // block_full(semID,package.weight);
+        if (assembly_line->current_size > 0) {
 
-            printf("current size: (after pop) %d\n", assembly_line->current_size);
-            printf("loaded package is from %d \n", package.workerID);
+            struct Package package = peak(assembly_line);
+
             if (package.weight > max_truck_load - packages_on_truck_weight) {
+                take_sem(semID, 2, 1);
+
                 print_date_and_message("truck is full");
+                sleep(1);
                 print_date_and_message("new truck has come");
                 packages_on_truck_weight = 0;
-            }
-            packages_on_truck_weight+=package.weight;
-            printf("new package has been loaded; current mass of packages on truck: %d \n", packages_on_truck_weight);
-            release_full(semID, package.weight);
 
+                release_sem(semID, 2, 1);
+            } else {
+                release_full(semID, package.weight);
+
+                pop(assembly_line);
+                packages_on_truck_weight += package.weight;
+                printf("New package has been loaded, time diff: %f, worker PID: %d, current load: %d \n",
+                       (double) (times(NULL) - package.time) / sysconf(_SC_CLK_TCK), package.workerID,
+                       packages_on_truck_weight);
+
+                release_sem(semID, 2, 1);
+            }
         } else {
             printf("Waiting for packages\n");
         }
         sleep(1);
+
     }
 
     return 0;

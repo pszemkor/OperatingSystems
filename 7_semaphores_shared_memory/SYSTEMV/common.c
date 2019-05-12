@@ -31,91 +31,96 @@ void raise_error(char *err) {
     exit(EXIT_FAILURE);
 }
 
-struct Package pop(struct Queue *assembly_line) {
-    if (assembly_line == NULL || assembly_line->used_size == 0)
-        raise_error("Queue does not exist or has max size 0");
+void pop(struct Queue *assembly_line) {
+    if (assembly_line == NULL)
+        raise_error("Queue is NULL");
     if (assembly_line->current_size == 0)
         raise_error("Cannot pop any element, queue is empty");
 
+    struct Package popped = assembly_line->queue[0];
+    for (int i = assembly_line->current_size - 1; i > 0; i--) {
+        popped = assembly_line->queue[i - 1];
+        assembly_line->queue[i - 1] = assembly_line->queue[i];
+    }
 
-    assembly_line->current_size --;
-
-
-    return assembly_line->queue[(assembly_line->head++)%assembly_line->used_size];
+    assembly_line->curr_load -= popped.weight;
+    assembly_line->current_size--;
 }
 
 void push(struct Queue *assembly_line, struct Package pack) {
-    if (assembly_line == NULL || assembly_line->used_size == 0)
-        raise_error("Queue does not exist or has max size 0");
-    if (assembly_line->current_size == assembly_line->used_size)
-        raise_error("Cannot push any element, queue is full");
+    if (assembly_line == NULL)
+        raise_error("Queue is NULL");
 
+    assembly_line->queue[assembly_line->current_size] = pack;
+    assembly_line->curr_load += pack.weight;
+    assembly_line->current_size += 1;
 
-    assembly_line->current_size++;
-
-
-   // assembly_line->queue[assembly_line->tail = assembly_line->tail + 1 >= assembly_line->used_size ? 0: assembly_line->tail++] = pack;
-    assembly_line->queue[(assembly_line->tail++)%assembly_line->used_size] = pack;
 }
 
-void take_sem(int semID, int semnum, int op){
+struct Package peak(struct Queue *assembly_line) {
+    if (assembly_line == NULL)
+        raise_error("Queue in NULL");
+    return assembly_line->queue[0];
+}
+
+void take_sem(int semID, int semnum, int op) {
     struct sembuf buf;
     buf.sem_num = semnum;
     buf.sem_op = -op;
     buf.sem_flg = 0;
-    if(semop(semID, &buf, 1) == -1)
-        raise_error("cannot block semaphore1");
+    if (semop(semID, &buf, 1) == -1)
+        raise_error("cannot block semaphore!");
 
 }
-void release_sem(int semID, int semnum, int op){
+
+void release_sem(int semID, int semnum, int op) {
     struct sembuf buf;
     buf.sem_num = semnum;
     buf.sem_op = op;
     buf.sem_flg = 0;
-    if(semop(semID, &buf, 1) == -1)
-        raise_error("cannot release semaphore1");
+    if (semop(semID, &buf, 1) == -1)
+        raise_error("cannot release semaphore!");
 }
 
 
-void block_full(int semID, int weight){
-    struct sembuf ops[2];
+int block_full(int semID, int weight) {
+    struct sembuf ops[3];
 
     ops[0].sem_op = -weight;
     ops[0].sem_num = 0;
-   // ops[0].sem_flg = IPC_NOWAIT;
+    //ops[0].sem_flg = IPC_NOWAIT;
 
     ops[1].sem_op = -1;
     ops[1].sem_num = 1;
     //ops[1].sem_flg = IPC_NOWAIT;
 
-//    ops[2].sem_op = -1;
-//    ops[2].sem_num = 2;
+    ops[2].sem_op = -1;
+    ops[2].sem_num = 2;
     //ops[2].sem_flg = IPC_NOWAIT;
 
-    if(semop(semID, ops, 2) == -1)
-        raise_error("cannot block semaphore");
+    return semop(semID, ops, 3);
 }
 
-void release_full(int semID, int weight){
-    struct sembuf ops[2];
+void release_full(int semID, int weight) {
+    struct sembuf ops[3];
 
     ops[0].sem_op = weight;
     ops[0].sem_num = 0;
-    //ops[0].sem_flg = IPC_NOWAIT;
+    ops[0].sem_flg = 0;
 
     ops[1].sem_op =  1;
     ops[1].sem_num = 1;
-    //ops[1].sem_flg = IPC_NOWAIT;
+    ops[1].sem_flg = 0;
 
-//    ops[2].sem_op =  1;
-//    ops[2].sem_num = 2;
-    //ops[2].sem_flg = IPC_NOWAIT;
+    ops[2].sem_op = -1;
+    ops[2].sem_num = 2;
+    ops[2].sem_flg = 0;
 
-    if(semop(semID, ops, 2) == -1)
+    if (semop(semID, ops, 3) == -1)
         raise_error("cannot release semaphore");
 }
 
-clock_t print_date_and_message(char* msg){
+clock_t print_date_and_message(char *msg) {
     char date[64];
     FILE *f = popen("date", "r");
     int check = fread(date, sizeof(char), 31, f);
@@ -123,8 +128,8 @@ clock_t print_date_and_message(char* msg){
         raise_error("cannot read date \n");
     pclose(f);
     char buffer[256];
-    sprintf(buffer,"%s; DATE: %s\n",msg,date);
-    printf("%s\n",buffer);
+    sprintf(buffer, "%s; DATE: %s\n", msg, date);
+    printf("%s\n", buffer);
     struct tms buf;
     return times(&buf);
 }
