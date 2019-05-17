@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -O2  -rdynamic CMakeFiles/trucker.dir/truck.c.o  -o trucker libcommon.a 

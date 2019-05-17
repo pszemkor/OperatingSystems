@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -O2  -rdynamic CMakeFiles/loader.dir/loader.c.o  -o loader libcommon.a 

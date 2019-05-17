@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/przjab98/Pulpit/OperatingSystems/7_semaphores_shared_memory/SYSTEMV/common.h
+sys/types.h
+-
+sys/ipc.h
+-
+
+/home/przjab98/Pulpit/OperatingSystems/7_semaphores_shared_memory/SYSTEMV/truck.c
+stdlib.h
+-
+stdio.h
+-
+signal.h
+-
+sys/sem.h
+-
+sys/ipc.h
+-
+sys/types.h
+-
+sys/shm.h
+-
+unistd.h
+-
+sys/times.h
+-
+common.h
+/home/przjab98/Pulpit/OperatingSystems/7_semaphores_shared_memory/SYSTEMV/common.h
+

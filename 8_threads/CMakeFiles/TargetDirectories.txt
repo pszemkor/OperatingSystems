@@ -1,0 +1,3 @@
+/home/przjab98/Pulpit/OperatingSystems/8_threads/CMakeFiles/rebuild_cache.dir
+/home/przjab98/Pulpit/OperatingSystems/8_threads/CMakeFiles/threads_ascii_convolution.dir
+/home/przjab98/Pulpit/OperatingSystems/8_threads/CMakeFiles/edit_cache.dir

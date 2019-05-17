@@ -21,7 +21,7 @@ void parse_args(int *thread_count, int *mode, char **input, char *argv[]) {
     *thread_count = convert_to_num(argv[1]);
     if (strcmp(argv[2], "block") == 0)
         *mode = BLOCK;
-    else if (strcmp(argv[2], "interleaved") != 0)
+    else if (strcmp(argv[2], "interleaved") == 0)
         *mode = INTERLEAVED;
     else
         raise_error("Unknown mode");

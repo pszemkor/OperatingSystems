@@ -128,8 +128,6 @@ static void *block(void *arg) {
     time->real = end - start;
     time->sys = ( end_tms.tms_stime) - ( start_tms.tms_stime);
     time->usr = ( end_tms.tms_utime) - ( start_tms.tms_utime);
-    printf("eeee");
-    printf("sysLLL: %ld %ld \n", start_tms.tms_stime, end_tms.tms_stime);
     pthread_exit(time);
 }
 
@@ -155,7 +153,6 @@ static void *interleaved(void *arg) {
         }
         x += m;
     }
-    printf("eeee");
     end = times(&end_tms);
     time->real = start - end;
     time->sys = (end_tms.tms_cstime + end_tms.tms_stime) - (start_tms.tms_cstime + start_tms.tms_stime);

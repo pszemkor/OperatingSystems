@@ -1,0 +1,6 @@
+/home/przjab98/Pulpit/OperatingSystems/7_semaphores_shared_memory/SYSTEMV/CMakeFiles/rebuild_cache.dir
+/home/przjab98/Pulpit/OperatingSystems/7_semaphores_shared_memory/SYSTEMV/CMakeFiles/edit_cache.dir
+/home/przjab98/Pulpit/OperatingSystems/7_semaphores_shared_memory/SYSTEMV/CMakeFiles/init.dir
+/home/przjab98/Pulpit/OperatingSystems/7_semaphores_shared_memory/SYSTEMV/CMakeFiles/common.dir
+/home/przjab98/Pulpit/OperatingSystems/7_semaphores_shared_memory/SYSTEMV/CMakeFiles/trucker.dir
+/home/przjab98/Pulpit/OperatingSystems/7_semaphores_shared_memory/SYSTEMV/CMakeFiles/loader.dir

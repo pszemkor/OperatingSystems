@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -O2  -rdynamic CMakeFiles/init.dir/init.c.o  -o init libcommon.a 
