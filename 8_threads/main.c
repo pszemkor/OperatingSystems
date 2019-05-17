@@ -3,7 +3,8 @@
 #include <pthread.h>
 #include <string.h>
 #include <math.h>
-#include <zconf.h>
+#include <unistd.h>
+#include <sys/times.h>
 #include "im.h"
 
 
@@ -25,6 +26,7 @@ int main(int argc, char *argv[]) {
         filter = generate_filter(c);
 
     } else if (argc == 6) {
+        parse_args(&thread_count, &mode, &input, argv);
         filtername = argv[4];
         output = argv[5];
         filter = parse_filter(filtername);
@@ -42,12 +44,12 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < height; i++)
         filtered_matrix[i] = (double *) malloc(width * sizeof(double));
 
-    for (i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            printf("%d ", (int) matrix_I[i][j]);
-        }
-        printf("\n");
-    }
+//    for (i = 0; i < height; i++) {
+//        for (int j = 0; j < width; j++) {
+//            printf("%d ", (int) matrix_I[i][j]);
+//        }
+//        printf("\n");
+//    }
 
     info_t *thread_args = malloc(thread_count * sizeof(info_t));
     pthread_t *pthreads = malloc(thread_count * sizeof(pthread_t));
@@ -70,14 +72,19 @@ int main(int argc, char *argv[]) {
 
     }
 
-    info_t *result = NULL;;
+    printf("################################################\n");
     for (i = 0; i < thread_count; i++) {
         void *res;
+        struct TimeMeasurement *time;
         pthread_join(pthreads[i], &res);
-        result = res;
+        time = res;
+        printf("thread: %lu \n", pthreads[i]);
+        printf("sys: %.3lf us, usr: %.3lf us, real: %.3lf \n s", (double) time->sys / sysconf(_SC_CLK_TCK),
+               (double) time->usr / sysconf(_SC_CLK_TCK), (double) time->real / sysconf(_SC_CLK_TCK));
+        printf("################################################\n");
     }
 
-    printf("*****************RESULT READY********************\n");
+    printf("\n*****************RESULTS READY********************\n");
 //    for (i = 0; i < height; i++) {
 //        for (int j = 0; j < width; j++) {
 //            printf("%d ", (int) result->filtered_matrix[i][j]);
@@ -85,38 +92,17 @@ int main(int argc, char *argv[]) {
 //        printf("\n");
 //    }
 
-    write_to_file(result->filtered_matrix, output, height, width, max_colour);
+    write_to_file(thread_args[0].filtered_matrix, output, height, width, max_colour);
     return 0;
-}
 
-int max(int a, int b) {
-    if (a > b)
-        return a;
-    else
-        return b;
-}
-
-int calculate_index(int a, int i, int c) {
-    return max(1, a - (int) ceil((double) c / 2) + i);
-}
-
-double convolution(int x, int y, int c, int height, int width, double **filter, int **matrix) {
-    double result = 0.0;
-
-    int i, j;
-    for (i = 0; i < c; i++)
-        for (j = 0; j < c; j++) {
-            int row = calculate_index(x, i, c);
-            int col = calculate_index(y, j, c);
-            if ((row >= 0 && row < height) && (col >= 0 && col < width)) {
-                result += ((double) (matrix[row][col]) * filter[i][j]);
-            }
-
-        }
-    return round(result);
 }
 
 static void *block(void *arg) {
+    clock_t start, end;
+    struct tms start_tms, end_tms;
+    struct TimeMeasurement *time = malloc(sizeof(struct TimeMeasurement));
+    start = times(&start_tms);
+
     info_t *argument = arg;
     int k = argument->k;
     int N = argument->N;
@@ -137,10 +123,22 @@ static void *block(void *arg) {
             argument->filtered_matrix[j][i] = conv;
         }
     }
-    pthread_exit(argument);
+
+    end = times(&end_tms);
+    time->real = end - start;
+    time->sys = ( end_tms.tms_stime) - ( start_tms.tms_stime);
+    time->usr = ( end_tms.tms_utime) - ( start_tms.tms_utime);
+    printf("eeee");
+    printf("sysLLL: %ld %ld \n", start_tms.tms_stime, end_tms.tms_stime);
+    pthread_exit(time);
 }
 
 static void *interleaved(void *arg) {
+    clock_t start, end;
+    struct tms start_tms, end_tms;
+    struct TimeMeasurement *time = malloc(sizeof(struct TimeMeasurement));
+    start = times(&start_tms);
+
     info_t *argument = arg;
     int k = argument->k;
     int N = argument->N;
@@ -157,7 +155,11 @@ static void *interleaved(void *arg) {
         }
         x += m;
     }
-
-    pthread_exit(argument);
+    printf("eeee");
+    end = times(&end_tms);
+    time->real = start - end;
+    time->sys = (end_tms.tms_cstime + end_tms.tms_stime) - (start_tms.tms_cstime + start_tms.tms_stime);
+    time->real = (end_tms.tms_cutime + end_tms.tms_utime) - (start_tms.tms_cutime + start_tms.tms_utime);
+    pthread_exit(time);
 
 }

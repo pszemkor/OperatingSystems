@@ -72,6 +72,33 @@ void raise_error(char *text) {
     exit(EXIT_FAILURE);
 }
 
+int max(int a, int b) {
+    if (a > b)
+        return a;
+    else
+        return b;
+}
+
+int calculate_index(int a, int i, int c) {
+    return max(1, a - (int) ceil((double) c / 2) + i);
+}
+
+double convolution(int x, int y, int c, int height, int width, double **filter, int **matrix) {
+    double result = 0.0;
+
+    int i, j;
+    for (i = 0; i < c; i++)
+        for (j = 0; j < c; j++) {
+            int row = calculate_index(x, i, c);
+            int col = calculate_index(y, j, c);
+            if ((row >= 0 && row < height) && (col >= 0 && col < width)) {
+                result += ((double) (matrix[row][col]) * filter[i][j]);
+            }
+
+        }
+    return round(result);
+}
+
 double **generate_filter(int c) {
 
     double **filter = (double **) malloc(c * sizeof(int *));

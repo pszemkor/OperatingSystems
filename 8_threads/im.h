@@ -10,13 +10,17 @@
 #include <pthread.h>
 #include <string.h>
 #include <math.h>
-#include <zconf.h>
+#include <unistd.h>
 
 #define BLOCK 0
 #define INTERLEAVED 1
 
-void raise_error(char *text);
 
+typedef struct TimeMeasurement{
+    clock_t real;
+    clock_t sys;
+    clock_t usr;
+}measure_t;
 
 typedef struct Thread_Info {
     double **filtered_matrix;
@@ -30,6 +34,13 @@ typedef struct Thread_Info {
 
 } info_t;
 
+double convolution(int x, int y, int c, int height, int width, double **filter, int **matrix);
+
+void raise_error(char *text);
+
+int calculate_index(int a, int i, int c);
+
+int max(int a, int b);
 
 int convert_to_num(char *given_string);
 
