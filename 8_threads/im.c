@@ -3,6 +3,7 @@
 //
 
 #include "im.h"
+
 int convert_to_num(char *given_string) {
     if (!given_string) {
         return -1;
@@ -103,8 +104,8 @@ void write_to_file(double **filtered, char *output_file, int height, int width, 
     for (i = 0; i < height; i++) {
         for (j = 0; j < width; j++) {
             fprintf(fp, "%d ", (int) filtered[i][j]);
-            in_line ++;
-            if(in_line >= 70){
+            in_line++;
+            if (in_line >= 70) {
                 fprintf(fp, "\n");
                 in_line = 0;
             }
@@ -112,4 +113,26 @@ void write_to_file(double **filtered, char *output_file, int height, int width, 
     }
 
     fclose(fp);
+}
+
+double **parse_filter(char *filtername) {
+    int c = 0;
+    FILE *fp = fopen(filtername, "r");
+    if (!fp)
+        raise_error("cannot open filter file");
+    fscanf(fp, "%d", &c);
+    double **filter = (double **) malloc(c * sizeof(int *));
+    int i, j;
+    for (i = 0; i < c; i++)
+        filter[i] = (double *) malloc(c * sizeof(double));
+
+    for (i = 0; i < c; i++) {
+        for (j = 0; j < c; j++) {
+            fscanf(fp, "%lf", &filter[i][j]);
+        }
+    }
+
+    fclose(fp);
+    return filter;
+
 }

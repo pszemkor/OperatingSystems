@@ -13,25 +13,25 @@ static void *interleaved(void *arg);
 
 int main(int argc, char *argv[]) {
     int c = 8;
-    char *output = NULL;
-    char *input = "/home/przjab98/CLionProjects/sysops/threads_ascii_convolution/lena.ascii.pgm";
-    char *filter = NULL;
-    int thread_count = 4, mode = 0;
+    char *output = "filtered";
+    char *input = "lena.ascii.pgm";
+    char *filtername = NULL;
+    int thread_count = 4, mode = 1;
+    double **filter;
 
-//    if (argc == 5) {
-//        parse_args(&thread_count, &mode, &input, argv);
-//        output = argv[4];
-//        filter = "tmp";
-//        //todo -> generate random filter
-//
-//    } else if (argc == 6) {
-//        filter = argv[4];
-//        output = argv[5];
-//        //todo -> parse filter
-//    } else {
-//        raise_error(
-//                "expected: 1. thread count 2. mode: block / interleaved, 3: input image, 4.(optional) filter, 5. output filename");
-//    }
+    if (argc == 5) {
+        parse_args(&thread_count, &mode, &input, argv);
+        output = argv[4];
+        filter = generate_filter(c);
+
+    } else if (argc == 6) {
+        filtername = argv[4];
+        output = argv[5];
+        filter = parse_filter(filtername);
+    } else {
+        raise_error(
+                "expected: 1. thread count 2. mode: block / interleaved, 3: input image, 4.(optional) filter, 5. output filename");
+    }
     int height;
     int width;
     int max_colour;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
     info_t *thread_args = malloc(thread_count * sizeof(info_t));
     pthread_t *pthreads = malloc(thread_count * sizeof(pthread_t));
-    printf("size: h: %d. w: %d \n", height, width);
+//    printf("size: h: %d. w: %d \n", height, width);
     for (i = 0; i < thread_count; i++) {
         thread_args[i].k = i + 1;
         thread_args[i].m = thread_count;
@@ -60,12 +60,7 @@ int main(int argc, char *argv[]) {
         thread_args[i].N = width;
         thread_args[i].height = height;
         thread_args[i].c = c;
-        if (!filter)
-            thread_args[i].filter = generate_filter(c);
-        else
-            //todo !!!
-            thread_args[i].filter = generate_filter(c);
-
+        thread_args[i].filter = filter;
         if (mode == BLOCK)
             pthread_create(&pthreads[i], NULL, &block, &thread_args[i]);
         else {
@@ -82,15 +77,15 @@ int main(int argc, char *argv[]) {
         result = res;
     }
 
-    printf("*****************RESULT********************\n");
-    for (i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            printf("%d ", (int) result->filtered_matrix[i][j]);
-        }
-        printf("\n");
-    }
+    printf("*****************RESULT READY********************\n");
+//    for (i = 0; i < height; i++) {
+//        for (int j = 0; j < width; j++) {
+//            printf("%d ", (int) result->filtered_matrix[i][j]);
+//        }
+//        printf("\n");
+//    }
 
-    write_to_file(result->filtered_matrix, "filtered.pgm", height, width, max_colour);
+    write_to_file(result->filtered_matrix, output, height, width, max_colour);
     return 0;
 }
 
@@ -142,8 +137,6 @@ static void *block(void *arg) {
             argument->filtered_matrix[j][i] = conv;
         }
     }
-//    printf("\n");
-
     pthread_exit(argument);
 }
 
@@ -154,8 +147,16 @@ static void *interleaved(void *arg) {
     int m = argument->m;
     int height = argument->height;
 
-
-
+    int x = k - 1;
+    while (x < N) {
+        int j;
+        for (j = 0; j < height; j++) {
+            double conv = convolution(j, x, argument->c, height, N, argument->filter,
+                                      argument->input_matrix);
+            argument->filtered_matrix[j][x] = conv;
+        }
+        x += m;
+    }
 
     pthread_exit(argument);
 
