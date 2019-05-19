@@ -50,7 +50,7 @@ int **get_matrix_to_filter(char *input_matrix, int *height_out, int *width_out, 
 
 double **generate_filter(int c);
 
-double **parse_filter(char *filtername);
+double **parse_filter(char *filtername, int *c);
 
 void write_to_file(double **filtered, char *output_file, int height, int width, int max_colour);
 

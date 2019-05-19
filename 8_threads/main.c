@@ -5,6 +5,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <sys/times.h>
+#include <sys/time.h>
 #include "im.h"
 
 
@@ -13,7 +14,7 @@ static void *block(void *arg);
 static void *interleaved(void *arg);
 
 int main(int argc, char *argv[]) {
-    int c = 8;
+    int c = 0;
     char *output = "filtered";
     char *input = "lena.ascii.pgm";
     char *filtername = NULL;
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]) {
         parse_args(&thread_count, &mode, &input, argv);
         filtername = argv[4];
         output = argv[5];
-        filter = parse_filter(filtername);
+        filter = parse_filter(filtername, &c);
     } else {
         raise_error(
                 "expected: 1. thread count 2. mode: block / interleaved, 3: input image, 4.(optional) filter, 5. output filename");
@@ -71,26 +72,26 @@ int main(int argc, char *argv[]) {
         sleep(1);
 
     }
+    printf("*******************START**************************\n");
+    printf(">FILTER SIZE: %d \n", c);
+    if(mode == 0)
+        printf(">MODE: BLOCK\n");
+    else
+        printf(">MODE: INTERLEAVED\n");
 
     printf("################################################\n");
     for (i = 0; i < thread_count; i++) {
         void *res;
-        struct TimeMeasurement *time;
+        struct timeval *time;
         pthread_join(pthreads[i], &res);
         time = res;
-        printf("thread: %lu \n", pthreads[i]);
-        printf("sys: %.3lf us, usr: %.3lf us, real: %.3lf \n s", (double) time->sys / sysconf(_SC_CLK_TCK),
-               (double) time->usr / sysconf(_SC_CLK_TCK), (double) time->real / sysconf(_SC_CLK_TCK));
+        printf(">THREAD: %lu \n", pthreads[i]);
+        printf(">TIME: %ld.%.6ld \n",time->tv_sec,time->tv_usec);
         printf("################################################\n");
     }
 
     printf("\n*****************RESULTS READY********************\n");
-//    for (i = 0; i < height; i++) {
-//        for (int j = 0; j < width; j++) {
-//            printf("%d ", (int) result->filtered_matrix[i][j]);
-//        }
-//        printf("\n");
-//    }
+
 
     write_to_file(thread_args[0].filtered_matrix, output, height, width, max_colour);
     return 0;
@@ -98,11 +99,10 @@ int main(int argc, char *argv[]) {
 }
 
 static void *block(void *arg) {
-    clock_t start, end;
-    struct tms start_tms, end_tms;
-    struct TimeMeasurement *time = malloc(sizeof(struct TimeMeasurement));
-    start = times(&start_tms);
-
+    struct timeval *start = malloc(sizeof(struct timeval));
+    struct timeval *end = malloc(sizeof(struct timeval));
+    struct timeval *res = malloc(sizeof(struct timeval));
+    gettimeofday(start,NULL);
     info_t *argument = arg;
     int k = argument->k;
     int N = argument->N;
@@ -123,20 +123,19 @@ static void *block(void *arg) {
             argument->filtered_matrix[j][i] = conv;
         }
     }
+    gettimeofday(end,NULL);
+    timersub(end,start,res);
+    free(start);
+    free(end);
 
-    end = times(&end_tms);
-    time->real = end - start;
-    time->sys = ( end_tms.tms_stime) - ( start_tms.tms_stime);
-    time->usr = ( end_tms.tms_utime) - ( start_tms.tms_utime);
-    pthread_exit(time);
+    pthread_exit(res);
 }
 
 static void *interleaved(void *arg) {
-    clock_t start, end;
-    struct tms start_tms, end_tms;
-    struct TimeMeasurement *time = malloc(sizeof(struct TimeMeasurement));
-    start = times(&start_tms);
-
+    struct timeval *start = malloc(sizeof(struct timeval));
+    struct timeval *end = malloc(sizeof(struct timeval));
+    struct timeval *res = malloc(sizeof(struct timeval));
+    gettimeofday(start,NULL);
     info_t *argument = arg;
     int k = argument->k;
     int N = argument->N;
@@ -153,10 +152,11 @@ static void *interleaved(void *arg) {
         }
         x += m;
     }
-    end = times(&end_tms);
-    time->real = start - end;
-    time->sys = (end_tms.tms_cstime + end_tms.tms_stime) - (start_tms.tms_cstime + start_tms.tms_stime);
-    time->real = (end_tms.tms_cutime + end_tms.tms_utime) - (start_tms.tms_cutime + start_tms.tms_utime);
-    pthread_exit(time);
+    gettimeofday(end,NULL);
+    timersub(end,start,res);
+    free(start);
+    free(end);
+
+    pthread_exit(res);
 
 }

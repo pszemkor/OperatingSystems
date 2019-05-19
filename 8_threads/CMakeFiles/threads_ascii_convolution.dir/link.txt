@@ -1,1 +1,0 @@
-/usr/bin/cc    CMakeFiles/threads_ascii_convolution.dir/main.c.o CMakeFiles/threads_ascii_convolution.dir/im.c.o  -o threads_ascii_convolution -lpthread -lm 

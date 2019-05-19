@@ -38,10 +38,6 @@ int **get_matrix_to_filter(char *input_matrix, int *height_out, int *width_out, 
     int **matrix = NULL;
 
     printf("\n");
-    char *line = NULL;
-    size_t len = 0;
-    int start_line = 0;
-    int row = 0;
     char buffer[255];
     fscanf(fp, "%s", buffer);
     if (strcmp("P2", buffer) != 0)
@@ -142,19 +138,20 @@ void write_to_file(double **filtered, char *output_file, int height, int width, 
     fclose(fp);
 }
 
-double **parse_filter(char *filtername) {
-    int c = 0;
+double **parse_filter(char *filtername, int *c) {
     FILE *fp = fopen(filtername, "r");
     if (!fp)
         raise_error("cannot open filter file");
-    fscanf(fp, "%d", &c);
-    double **filter = (double **) malloc(c * sizeof(int *));
-    int i, j;
-    for (i = 0; i < c; i++)
-        filter[i] = (double *) malloc(c * sizeof(double));
+    fscanf(fp, "%d", c);
 
-    for (i = 0; i < c; i++) {
-        for (j = 0; j < c; j++) {
+    printf("c: %d \n", *c);
+    double **filter = (double **) malloc(*c * sizeof(int *));
+    int i, j;
+    for (i = 0; i < *c; i++)
+        filter[i] = (double *) malloc(*c * sizeof(double));
+
+    for (i = 0; i < *c; i++) {
+        for (j = 0; j < *c; j++) {
             fscanf(fp, "%lf", &filter[i][j]);
         }
     }
