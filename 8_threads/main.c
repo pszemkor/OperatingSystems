@@ -14,7 +14,7 @@ static void *block(void *arg);
 static void *interleaved(void *arg);
 
 int main(int argc, char *argv[]) {
-    int c = 0;
+    int c = 8;
     char *output = "filtered";
     char *input = "lena.ascii.pgm";
     char *filtername = NULL;
@@ -51,6 +51,11 @@ int main(int argc, char *argv[]) {
 //        }
 //        printf("\n");
 //    }
+
+    struct timeval *start = malloc(sizeof(struct timeval));
+    struct timeval *end = malloc(sizeof(struct timeval));
+    struct timeval *res = malloc(sizeof(struct timeval));
+    gettimeofday(start,NULL);
 
     info_t *thread_args = malloc(thread_count * sizeof(info_t));
     pthread_t *pthreads = malloc(thread_count * sizeof(pthread_t));
@@ -90,6 +95,12 @@ int main(int argc, char *argv[]) {
         printf("################################################\n");
     }
 
+    gettimeofday(end,NULL);
+    timersub(end,start,res);
+    free(start);
+    free(end);
+
+    printf("TOTAL > %ld.%.6ld \n",res->tv_sec,res->tv_usec);
     printf("\n*****************RESULTS READY********************\n");
 
 

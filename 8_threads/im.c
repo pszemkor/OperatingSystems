@@ -126,7 +126,10 @@ void write_to_file(double **filtered, char *output_file, int height, int width, 
     int i, j;
     for (i = 0; i < height; i++) {
         for (j = 0; j < width; j++) {
-            fprintf(fp, "%d ", (int) filtered[i][j]);
+            if (filtered[i][j] < 0)
+                fprintf(fp, "%d ", 0);
+            else
+                fprintf(fp, "%d ", (int) filtered[i][j]);
             in_line++;
             if (in_line >= 70) {
                 fprintf(fp, "\n");
@@ -144,7 +147,6 @@ double **parse_filter(char *filtername, int *c) {
         raise_error("cannot open filter file");
     fscanf(fp, "%d", c);
 
-    printf("c: %d \n", *c);
     double **filter = (double **) malloc(*c * sizeof(int *));
     int i, j;
     for (i = 0; i < *c; i++)
