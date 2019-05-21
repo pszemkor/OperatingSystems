@@ -74,7 +74,6 @@ int main(int argc, char *argv[]) {
         else {
             pthread_create(&pthreads[i], NULL, &interleaved, &thread_args[i]);
         }
-        sleep(1);
 
     }
     printf("*******************START**************************\n");
