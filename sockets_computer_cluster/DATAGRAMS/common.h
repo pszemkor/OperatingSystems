@@ -43,7 +43,7 @@ typedef struct request_t{
 
 typedef struct Client {
     char *name;
-    uint8_t active_counter;
+    int active_counter;
     enum connect_type connect_type;
     struct sockaddr* sockaddr;
     int reserved;

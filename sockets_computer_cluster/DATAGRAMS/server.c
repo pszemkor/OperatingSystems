@@ -132,7 +132,7 @@ void *ping_clients(void *arg) {
             }
         }
         pthread_mutex_unlock(&mutex);
-        sleep(10);
+        sleep(15);
     }
     return NULL;
 }
@@ -173,7 +173,9 @@ void *handler_terminal(void *arg) {
                     raise_error("cannot sendto");
                 }
                 sent = 1;
+                clients[i].reserved++;
                 break;
+
             }
         }
         if (!sent) {
@@ -187,7 +189,7 @@ void *handler_terminal(void *arg) {
                     sizeof(request_t)) {
                     raise_error("cannot sendto");
                 }
-
+                clients[i].reserved++;
             }
 
         }
@@ -219,7 +221,7 @@ void handle_message(int socket) {
             int i;
             for (i = 0; i < clients_amount; i++) {
                 if (strcmp(clients[i].name, msg.name) == 0) {
-                    clients[i].reserved = 0;
+                    clients[i].reserved --;
                     clients[i].active_counter = 0;
                 }
             }
@@ -234,7 +236,7 @@ void handle_message(int socket) {
         case PONG: {
             pthread_mutex_lock(&mutex);
             int i = in(msg.name, clients, (size_t) clients_amount, sizeof(Client), (__compar_fn_t) cmp_name);
-            if (i >= 0) clients[i].active_counter--;
+            if (i >= 0) clients[i].active_counter = clients[i].active_counter==0 ? 0 : clients[i].active_counter-1;
             pthread_mutex_unlock(&mutex);
             break;
         }
