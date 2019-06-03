@@ -14,6 +14,7 @@
 
 char *name;
 int client_socket;
+int ID = 0;
 
 void init(char *connection_type, char *server_ip_path, char *port);
 void handle_message();
@@ -42,32 +43,28 @@ int main(int argc, char *argv[]) {
 
 void* handle_request(void * arg) {
 
-    uint16_t text_len;
-    if (read(client_socket, &text_len, 2) <= 0) {
-        raise_error("cannot read length");
-    }
-    char text[10240];
-    memset( text, '\0', sizeof(char)*10240);
-    if (read(client_socket, text, text_len) < 0) {
-        raise_error("cannot read whole text");
-    }
+    request_t* req_tmp = (request_t *)arg;
+    request_t req;
+    strcpy(req.text,req_tmp->text);
+    int id = req_tmp ->ID;
 
-    char *buffer = malloc(100 + 2 * strlen(text));
-    char *buffer_res = malloc(100 + 2 * strlen(text));
-    sprintf(buffer, "echo '%s' | awk '{for(x=1;$x;++x)print $x}' | sort | uniq -c", (char *) text);
+
+    char *buffer = malloc(100 + 2 * strlen(req.text));
+    char *buffer_res = malloc(100 + 2 * strlen(req.text));
+    sprintf(buffer, "echo '%s' | awk '{for(x=1;$x;++x)print $x}' | sort | uniq -c", (char *) req.text);
     FILE *result = popen(buffer, "r");
-    int n = fread(buffer, 1, 99 + 2 * strlen(text), result);
+    int n = fread(buffer, 1, 99 + 2 * strlen(req.text), result);
     buffer[n] = '\0';
 
     int words_count = 1;
-    char *res = strtok(text, " ");
+    char *res = strtok(req.text, " ");
     while (strtok(NULL, " ") && res) {
         words_count++;
     }
 
-    sprintf(buffer_res, "sum: %d :: %s", words_count, buffer);
+    sprintf(buffer_res, "ID: %d sum: %d || %s",id, words_count, buffer);
     printf("RES: %s\n", buffer);
-    sleep(5);
+    //sleep(4);
     pthread_mutex_lock(&mutex);
     send_message(RESULT);
     int len = strlen(buffer_res);
@@ -119,7 +116,19 @@ void handle_message() {
         switch (message_type) {
             case REQUEST:
                 //handle_request();
-                pthread_create(&thread, NULL, handle_request, NULL);
+                printf(" ");
+                uint16_t req_len;
+                if (read(client_socket, &req_len, 2) <= 0) {
+                    raise_error("cannot read length");
+                }
+
+                request_t req;
+                memset( req.text, '\0', sizeof(req.text));
+                if (read(client_socket, req.text, req_len) < 0) {
+                    raise_error("cannot read whole text");
+                }
+
+                pthread_create(&thread, NULL, handle_request, &req);
                 pthread_detach(thread);
                 break;
             case PING:

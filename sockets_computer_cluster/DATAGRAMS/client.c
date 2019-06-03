@@ -57,6 +57,7 @@ void* handle_request(void* arg) {
     struct request_t* got_arg = arg;
     struct request_t req;
     strcpy(req.text, got_arg->text);
+    req.ID = got_arg->ID;
 
     //printf("HALKOOOO \n");
 
@@ -76,7 +77,7 @@ void* handle_request(void* arg) {
     while (strtok(NULL, " ") && res) {
         words_count++;
     }
-    sprintf(buffer_res, "sum: %d || %s", words_count, buffer);
+    sprintf(buffer_res, "ID: %d|sum: %d|words count: \n %s",req.ID, words_count, buffer);
     //printf("RES: %s\n", buffer_res);
     //sleep(5);
     pthread_mutex_lock(&request1_mutex);

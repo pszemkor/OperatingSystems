@@ -63,7 +63,7 @@ void clean();
 
 void *ping_routine(void *);
 
-void *handle_termina_input(void *);
+void *hendle_terminal(void *);
 
 void handle_connection(int);
 
@@ -89,6 +89,7 @@ int web_socket;
 int local_socket;
 int epoll;
 char *local_path;
+int id;
 
 pthread_t ping;
 pthread_t command;
@@ -147,20 +148,20 @@ void *ping_routine(void *arg) {
     return NULL;
 }
 
-void send_msg(int type, int len, char *text, int i) {
+void send_msg(int type, int len, request_t *req, int i) {
     if (write(clients[i].fd, &type, 1) != 1) {
         raise_error("cannot send");
     }
     if (write(clients[i].fd, &len, 2) != 2) {
         raise_error("cannot send");
     }
-    if (write(clients[i].fd, text, len) != len) {
+    if (write(clients[i].fd, req, len) != len) {
         raise_error("cannot send");
     }
 
 }
 
-void *handle_termina_input(void *arg) {
+void *hendle_terminal(void *arg) {
 
     int true = 1;
     while (true) {
@@ -171,10 +172,13 @@ void *handle_termina_input(void *arg) {
         memset( file_buffer, '\0', sizeof(char)*10240);
         int scan_res = sscanf(buffer, "%s", file_buffer);
         printf("state: %d \n", scan_res);
+        request_t req;
         if (scan_res == 1) {
+            id++;
+            printf("REQUEST ID: %d \n", id);
             printf("%s \n", file_buffer);
-            int status = read_whole_file(file_buffer, file_buffer);
-
+            int status = read_whole_file(file_buffer, req.text);
+            req.ID = id;
             if(strlen(file_buffer) <= 0){
                 printf("cannot send empty file \n");
                 continue;
@@ -189,7 +193,7 @@ void *handle_termina_input(void *arg) {
                 if (clients[i].reserved == 0) {
                     printf("Request sent to %s \n", clients[i].name);
                     clients[i].reserved = 1;
-                    send_msg(REQUEST, strlen(file_buffer), file_buffer, i);
+                    send_msg(REQUEST, sizeof(req), &req, i);
                     sent = 1;
                     break;
                 }
@@ -198,7 +202,7 @@ void *handle_termina_input(void *arg) {
                 i = 0;
                 if (clients[i].reserved > -1){
                     clients[i].reserved  ++;
-                    send_msg(REQUEST, strlen(file_buffer), file_buffer, i);
+                    send_msg(REQUEST, sizeof(req), &req, i);
                 }
 
             }
@@ -405,7 +409,7 @@ void init(char *port, char *path) {
 
     if (pthread_create(&ping, NULL, ping_routine, NULL) != 0)
         raise_error(" Could not create Pinger Thread");
-    if (pthread_create(&command, NULL, handle_termina_input, NULL) != 0)
+    if (pthread_create(&command, NULL, hendle_terminal, NULL) != 0)
         raise_error(" Could not create Commander Thread");
 }
 

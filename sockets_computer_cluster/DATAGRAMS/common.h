@@ -39,6 +39,7 @@ typedef struct message_t {
 
 typedef struct request_t{
     char text[10240];
+    int ID;
 } request_t;
 
 typedef struct Client {

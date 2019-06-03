@@ -85,7 +85,7 @@ int web_socket;
 int local_socket;
 int epoll;
 char *local_path;
-
+int id = 0;
 pthread_t ping;
 pthread_t command;
 
@@ -144,8 +144,8 @@ void *handler_terminal(void *arg) {
         char buffer[256];
         printf("Enter command: \n");
         fgets(buffer, 256, stdin);
-        memset(req.text, 0, sizeof(req.text) );
-        sscanf(buffer, "%s",buffer);
+        memset(req.text, 0, sizeof(req.text));
+        sscanf(buffer, "%s", buffer);
         uint8_t message_type = REQUEST;
         int status = read_whole_file(buffer, req.text);
         if (strlen(req.text) <= 0) {
@@ -156,8 +156,10 @@ void *handler_terminal(void *arg) {
             printf("WRONG FILE \n");
             continue;
         }
-
-       // printf("TO SEND: %s \n", req.text);
+        id++;
+        printf("REQUEST ID: %d \n", id);
+        req.ID = id;
+        // printf("TO SEND: %s \n", req.text);
         int i = 0;
         int sent = 0;
         for (i = 0; i < clients_amount; i++) {
@@ -221,7 +223,7 @@ void handle_message(int socket) {
             int i;
             for (i = 0; i < clients_amount; i++) {
                 if (strcmp(clients[i].name, msg.name) == 0) {
-                    clients[i].reserved --;
+                    clients[i].reserved--;
                     clients[i].active_counter = 0;
                 }
             }
@@ -236,7 +238,7 @@ void handle_message(int socket) {
         case PONG: {
             pthread_mutex_lock(&mutex);
             int i = in(msg.name, clients, (size_t) clients_amount, sizeof(Client), (__compar_fn_t) cmp_name);
-            if (i >= 0) clients[i].active_counter = clients[i].active_counter==0 ? 0 : clients[i].active_counter-1;
+            if (i >= 0) clients[i].active_counter = clients[i].active_counter == 0 ? 0 : clients[i].active_counter - 1;
             pthread_mutex_unlock(&mutex);
             break;
         }

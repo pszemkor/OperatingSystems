@@ -37,6 +37,11 @@ typedef struct Client {
     int reserved;
 } Client;
 
+typedef struct request_t{
+    char text[10240];
+    int ID;
+} request_t;
+
 
 void raise_error(char* message){
     fprintf(stderr, "%s :: %s \n", message, strerror(errno));
