@@ -132,19 +132,19 @@ void *ping_clients(void *arg) {
             }
         }
         pthread_mutex_unlock(&mutex);
-        sleep(3);
+        sleep(5);
     }
     return NULL;
 }
 
 void *handler_terminal(void *arg) {
-
+    request_t req;
     int true = 1;
     while (true) {
         char buffer[256];
         printf("Enter command: \n");
         fgets(buffer, 256, stdin);
-        request_t req;
+        memset(req.text, 0, sizeof(req.text) );
         sscanf(buffer, "%s",buffer);
         uint8_t message_type = REQUEST;
         int status = read_whole_file(buffer, req.text);
@@ -156,6 +156,8 @@ void *handler_terminal(void *arg) {
             printf("WRONG FILE \n");
             continue;
         }
+
+       // printf("TO SEND: %s \n", req.text);
         int i = 0;
         int sent = 0;
         for (i = 0; i < clients_amount; i++) {
@@ -224,7 +226,7 @@ void handle_message(int socket) {
                 }
             }
 
-            printf("RES \n");
+            //printf("RES \n");
             printf("RESULT: %s \n", msg.value);
             printf("from: %s \n", msg.name);
 
@@ -239,7 +241,7 @@ void handle_message(int socket) {
             break;
         }
         default:
-            printf("Unknown message type\n");
+            //printf("Unknown message type\n");
             break;
     }
 

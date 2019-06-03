@@ -51,7 +51,46 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-//void* handle_request(void* arg) {
+void* handle_request(void* arg) {
+
+
+    struct request_t* got_arg = arg;
+    struct request_t req;
+    strcpy(req.text, got_arg->text);
+
+    //printf("HALKOOOO \n");
+
+    //printf("STARTED WITH: %s\n", req.text);
+    char *buffer = malloc(100 + 2 * strlen(req.text));
+    char *buffer_res = malloc(100 + 2 * strlen(req.text));
+
+    sprintf(buffer, "echo '%s' | awk '{for(x=1;$x;++x)print $x}' | sort | uniq -c", (char *) req.text);
+    FILE *result = popen(buffer, "r");
+
+    int n = fread(buffer, 1, 99 + 2 * strlen(req.text), result);
+    buffer[n] = '\0';
+
+    //todo -> check len!!!!
+    int words_count = 1;
+    char *res = strtok(req.text, " ");
+    while (strtok(NULL, " ") && res) {
+        words_count++;
+    }
+    sprintf(buffer_res, "sum: %d || %s", words_count, buffer);
+    //printf("RES: %s\n", buffer_res);
+    //sleep(5);
+    pthread_mutex_lock(&request1_mutex);
+    send_message(RESULT, buffer_res);
+    pthread_mutex_unlock(&request1_mutex);
+   // printf("RESULT SENT \n");
+    free(buffer);
+    free(buffer_res);
+    return NULL;
+
+}
+
+
+//void handle_request() {
 //    printf("HALKOOOO \n");
 //    request_t req;
 //    if (read(client_socket, &req, sizeof(request_t)) <= 0) {
@@ -85,47 +124,8 @@ int main(int argc, char *argv[]) {
 //    printf("RESULT SENT \n");
 //    free(buffer);
 //    free(buffer_res);
-//    return NULL;
 //
 //}
-
-
-void handle_request() {
-    printf("HALKOOOO \n");
-    request_t req;
-    if (read(client_socket, &req, sizeof(request_t)) <= 0) {
-        raise_error("cannot read length");
-    }
-    printf("STARTED WITH: %s\n", req.text);
-//    printf("words: %d \n", words_count);
-//    printf("HANDLING REQUEST \n");
-
-    char *buffer = malloc(100 + 2 * strlen(req.text));
-    char *buffer_res = malloc(100 + 2 * strlen(req.text));
-//    if (buffer == NULL) die_errno();
-    sprintf(buffer, "echo '%s' | awk '{for(x=1;$x;++x)print $x}' | sort | uniq -c", (char *) req.text);
-    FILE *result = popen(buffer, "r");
-    //if (result == 0) { free(buffer); break; }
-    int n = fread(buffer, 1, 99 + 2 * strlen(req.text), result);
-    buffer[n] = '\0';
-
-    //todo -> check len!!!!
-    int words_count = 1;
-    char *res = strtok(req.text, " ");
-    while (strtok(NULL, " ") && res) {
-        words_count++;
-    }
-    sprintf(buffer_res, "sum: %d || %s", words_count, buffer);
-    printf("RES: %s\n", buffer_res);
-
-    pthread_mutex_lock(&request1_mutex);
-    send_message(RESULT, buffer_res);
-    pthread_mutex_unlock(&request1_mutex);
-    printf("RESULT SENT \n");
-    free(buffer);
-    free(buffer_res);
-
-}
 
 void send_message(uint8_t message_type, char *value) {
     message_t msg;
@@ -165,6 +165,7 @@ void register_on_server() {
 
 void handle_message() {
     uint8_t message_type;
+    pthread_t thread;
     int x = 1;
     while (x) {
        // printf("GOT STH \n");
@@ -174,12 +175,17 @@ void handle_message() {
         switch (message_type) {
             case REQUEST:
                 printf("GOT REQUEST \n");
-                handle_request();
-//                pthread_t thread;
-//                pthread_create(&thread, NULL, handle_request, NULL);
+                //handle_request();
+                request_t req;
+                if (read(client_socket, &req, sizeof(request_t)) <= 0) {
+                    raise_error("cannot read length");
+                }
+                pthread_create(&thread, NULL, handle_request, &req);
+                pthread_detach(thread);
+                //sleep(1);
                 break;
             case PING:
-                printf("GOT PING \n");
+                //printf("GOT PING \n");
                 pthread_mutex_lock(&request1_mutex);
                 send_message(PONG, NULL);
                 pthread_mutex_unlock(&request1_mutex);
@@ -259,8 +265,11 @@ void init(char *connection_type, char *server_ip_path, char *port) {
 }
 
 void clean() {
-    if (signal_ > 0)
+    if (signal_ > 0){
         send_message(UNREGISTER, NULL);
+        unlink(name);
+    }
+
     if (close(client_socket) == -1)
         fprintf(stderr, "\n Could not close Socket\n");
     unlink(name);
