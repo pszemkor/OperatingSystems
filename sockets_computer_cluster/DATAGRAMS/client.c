@@ -20,11 +20,9 @@ int request_counter = 0;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t request1_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond1 = PTHREAD_COND_INITIALIZER;
+//pthread_cond_t cond1 = PTHREAD_COND_INITIALIZER;
 
 void init(char *connection_type, char *server_ip_path, char *port);
-
-void handle_request();
 
 void send_message(uint8_t message_type, char *value);
 
@@ -53,13 +51,52 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void handle_request() {
+//void* handle_request(void* arg) {
+//    printf("HALKOOOO \n");
+//    request_t req;
+//    if (read(client_socket, &req, sizeof(request_t)) <= 0) {
+//        raise_error("cannot read length");
+//    }
+//    printf("STARTED WITH: %s\n", req.text);
+////    printf("words: %d \n", words_count);
+////    printf("HANDLING REQUEST \n");
+//
+//    char *buffer = malloc(100 + 2 * strlen(req.text));
+//    char *buffer_res = malloc(100 + 2 * strlen(req.text));
+////    if (buffer == NULL) die_errno();
+//    sprintf(buffer, "echo '%s' | awk '{for(x=1;$x;++x)print $x}' | sort | uniq -c", (char *) req.text);
+//    FILE *result = popen(buffer, "r");
+//    //if (result == 0) { free(buffer); break; }
+//    int n = fread(buffer, 1, 99 + 2 * strlen(req.text), result);
+//    buffer[n] = '\0';
+//
+//    //todo -> check len!!!!
+//    int words_count = 1;
+//    char *res = strtok(req.text, " ");
+//    while (strtok(NULL, " ") && res) {
+//        words_count++;
+//    }
+//    sprintf(buffer_res, "sum: %d || %s", words_count, buffer);
+//    printf("RES: %s\n", buffer_res);
+//
+//    pthread_mutex_lock(&request1_mutex);
+//    send_message(RESULT, buffer_res);
+//    pthread_mutex_unlock(&request1_mutex);
+//    printf("RESULT SENT \n");
+//    free(buffer);
+//    free(buffer_res);
+//    return NULL;
+//
+//}
 
+
+void handle_request() {
+    printf("HALKOOOO \n");
     request_t req;
     if (read(client_socket, &req, sizeof(request_t)) <= 0) {
         raise_error("cannot read length");
     }
-
+    printf("STARTED WITH: %s\n", req.text);
 //    printf("words: %d \n", words_count);
 //    printf("HANDLING REQUEST \n");
 
@@ -78,9 +115,12 @@ void handle_request() {
     while (strtok(NULL, " ") && res) {
         words_count++;
     }
-    sprintf(buffer_res, "sum: %d :: %s", words_count, buffer);
+    sprintf(buffer_res, "sum: %d || %s", words_count, buffer);
     printf("RES: %s\n", buffer_res);
+
+    pthread_mutex_lock(&request1_mutex);
     send_message(RESULT, buffer_res);
+    pthread_mutex_unlock(&request1_mutex);
     printf("RESULT SENT \n");
     free(buffer);
     free(buffer_res);
@@ -127,7 +167,7 @@ void handle_message() {
     uint8_t message_type;
     int x = 1;
     while (x) {
-        printf("GOT STH \n");
+       // printf("GOT STH \n");
         if (read(client_socket, &message_type, sizeof(uint8_t)) != sizeof(uint8_t))
             raise_error(" Could not read message type");
         //printf("HANDLING: %d \n", message_type);
@@ -135,15 +175,18 @@ void handle_message() {
             case REQUEST:
                 printf("GOT REQUEST \n");
                 handle_request();
+//                pthread_t thread;
+//                pthread_create(&thread, NULL, handle_request, NULL);
                 break;
             case PING:
                 printf("GOT PING \n");
+                pthread_mutex_lock(&request1_mutex);
                 send_message(PONG, NULL);
+                pthread_mutex_unlock(&request1_mutex);
                 break;
             default:
-                exit(1);
                 //printf("Unknown message type %d\n", message_type);
-                //break;
+                break;
         }
     }
 }

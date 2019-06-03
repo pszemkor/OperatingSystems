@@ -132,7 +132,7 @@ void *ping_clients(void *arg) {
             }
         }
         pthread_mutex_unlock(&mutex);
-        sleep(15);
+        sleep(3);
     }
     return NULL;
 }
@@ -145,10 +145,9 @@ void *handler_terminal(void *arg) {
         printf("Enter command: \n");
         fgets(buffer, 256, stdin);
         request_t req;
-        int scan_res = sscanf(buffer, "%s", req.text);
-
+        sscanf(buffer, "%s",buffer);
         uint8_t message_type = REQUEST;
-        int status = read_whole_file(req.text, req.text);
+        int status = read_whole_file(buffer, req.text);
         if (strlen(req.text) <= 0) {
             printf("cannot send empty file \n");
             continue;
@@ -162,7 +161,6 @@ void *handler_terminal(void *arg) {
         for (i = 0; i < clients_amount; i++) {
             if (clients[i].reserved == 0) {
                 printf("Request sent to %s \n", clients[i].name);
-                //send_msg(REQUEST, strlen(file_buffer), file_buffer, i);
 
                 int socket = clients[i].connect_type == WEB ? web_socket : local_socket;
                 if (sendto(socket, &message_type, 1, 0, clients[i].sockaddr, clients[i].socklen) != 1) {

@@ -9,6 +9,7 @@
 #include <sys/un.h>
 #include <endian.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 
 
 char *name;
@@ -16,12 +17,11 @@ int client_socket;
 
 void init(char *connection_type, char *server_ip_path, char *port);
 void handle_message();
-void handle_request();
 void connect_to_server();
 void send_message(uint8_t message_type);
 void clean();
 
-
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char *argv[]) {
 
@@ -40,7 +40,8 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void handle_request() {
+void* handle_request(void * arg) {
+
     uint16_t text_len;
     if (read(client_socket, &text_len, 2) <= 0) {
         raise_error("cannot read length");
@@ -65,8 +66,9 @@ void handle_request() {
     }
 
     sprintf(buffer_res, "sum: %d :: %s", words_count, buffer);
-    //printf("RES: %s\n", buffer);
-
+    printf("RES: %s\n", buffer);
+    sleep(5);
+    pthread_mutex_lock(&mutex);
     send_message(RESULT);
     int len = strlen(buffer_res);
     if (write(client_socket,&len, sizeof(int)) != sizeof(int))
@@ -74,6 +76,8 @@ void handle_request() {
     if (write(client_socket, buffer_res, len) != len)
         raise_error(" Could not write message type");
     printf("RESULT SENT \n");
+    pthread_mutex_unlock(&mutex);
+    return NULL;
 }
 
 void send_message(uint8_t message_type) {
@@ -107,20 +111,25 @@ void connect_to_server() {
 
 void handle_message() {
     uint8_t message_type;
+    pthread_t thread;
     int x = 1;
     while (x) {
         if (read(client_socket, &message_type, TYPE_SIZE) != TYPE_SIZE)
             raise_error(" Could not read message type");
         switch (message_type) {
             case REQUEST:
-                handle_request();
+                //handle_request();
+                pthread_create(&thread, NULL, handle_request, NULL);
+                pthread_detach(thread);
                 break;
             case PING:
-                printf("HALKO \n");
+                //printf("HALKO \n");
+                pthread_mutex_lock(&mutex);
                 send_message(PONG);
+                pthread_mutex_unlock(&mutex);
                 break;
             default:
-                printf("Unknown message type\n");
+                //printf("Unknown message type\n");
                 break;
         }
     }

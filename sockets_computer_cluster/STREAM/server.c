@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
     while (x) {
         if (epoll_wait(epoll, &event, 1, -1) == -1)
             raise_error(" epoll_wait failed\n");
-
+        //printf("A JA WIEM PO CO? \n");
         if (event.data.fd < 0)
             handle_connection(-event.data.fd);
         else
@@ -136,7 +136,9 @@ void *ping_routine(void *arg) {
             } else {
                 if (write(clients[i].fd, &message_type, 1) != 1)
                     raise_error(" Could not PING client");
+
                 clients[i].active_counter++;
+                //printf("INC UN: %d \n",clients[i].active_counter);
             }
         }
         pthread_mutex_unlock(&mutex);
