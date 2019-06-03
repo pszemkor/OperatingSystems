@@ -166,6 +166,7 @@ void *hendle_terminal(void *arg) {
     int true = 1;
     while (true) {
         char buffer[256];
+        memset(buffer,0, 256);
         printf("Enter command: \n");
         fgets( buffer,256,stdin);
         char file_buffer[10240];
@@ -177,6 +178,7 @@ void *hendle_terminal(void *arg) {
             id++;
             printf("REQUEST ID: %d \n", id);
             printf("%s \n", file_buffer);
+            memset(req.text, 0, sizeof(req.text));
             int status = read_whole_file(file_buffer, req.text);
             req.ID = id;
             if(strlen(file_buffer) <= 0){
@@ -250,12 +252,14 @@ void handle_message(int socket) {
         }
         case RESULT: {
             printf("SERVER GOT RESULT \n");
-            char result[10240];
+
             if (read(socket, client_name, message_size) < 0)
                 raise_error("read res name");
             int size;
             if (read(socket, &size, sizeof(int)) < 0)
                 raise_error("size of res");
+            char* result = malloc(size);
+            memset(result, 0, size);
             if (read(socket, result, size) < 0)
                 raise_error("result");
 
@@ -269,6 +273,7 @@ void handle_message(int socket) {
                     printf("Client %s is free now \n", client_name);
                 }
             }
+            free(result);
             break;
         }
         case PONG: {
@@ -376,6 +381,12 @@ void init(char *port, char *path) {
 
     if ((web_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         raise_error(" Could not create web socket\n");
+
+    int yes = 1;
+    if (setsockopt(web_socket,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+        perror("setsockopt");
+        exit(1);
+    }
 
     if (bind(web_socket, (const struct sockaddr *) &web_address, sizeof(web_address)))
         raise_error(" Could not bind web socket\n");

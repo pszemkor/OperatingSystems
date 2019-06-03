@@ -45,6 +45,7 @@ void* handle_request(void * arg) {
 
     request_t* req_tmp = (request_t *)arg;
     request_t req;
+    memset(req.text,0, sizeof(req.text));
     strcpy(req.text,req_tmp->text);
     int id = req_tmp ->ID;
 
@@ -73,6 +74,8 @@ void* handle_request(void * arg) {
     if (write(client_socket, buffer_res, len) != len)
         raise_error(" Could not write message type");
     printf("RESULT SENT \n");
+    free(buffer);
+    free(buffer_res);
     pthread_mutex_unlock(&mutex);
     return NULL;
 }

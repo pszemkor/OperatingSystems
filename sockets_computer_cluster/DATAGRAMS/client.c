@@ -231,6 +231,12 @@ void init(char *connection_type, char *server_ip_path, char *port) {
         if ((client_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
             raise_error("socket");
         }
+        int yes = 1;
+         if (setsockopt(client_socket,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+            perror("setsockopt");
+            exit(1);
+        }
+
         if (connect(client_socket, (const struct sockaddr *) &web_address, sizeof(web_address)) == -1) {
             raise_error("connect");
         }

@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <errno.h>
-
+#define MAX_TEXT_SIZE 10240
 #define MAX_PATH 108
 #define CLIENT_MAX 12
 #define TYPE_SIZE 1
