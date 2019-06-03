@@ -33,7 +33,7 @@ typedef enum connect_type {
 typedef struct Client {
     int fd;
     char *name;
-    uint8_t active_counter;
+    int active_counter;
     int reserved;
 } Client;
 

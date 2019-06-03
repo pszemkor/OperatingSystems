@@ -130,16 +130,17 @@ void *ping_routine(void *arg) {
         pthread_mutex_lock(&mutex);
         for (int i = 0; i < clients_amount; ++i) {
             if (clients[i].active_counter != 0) {
+                printf("num: %d \n",clients[i].active_counter );
                 printf("Client \"%s\" do not respond. Removing from registered clients\n", clients[i].name);
                 delete_client(i--);
             } else {
                 if (write(clients[i].fd, &message_type, 1) != 1)
-                    raise_error(" Could not PING clien");
+                    raise_error(" Could not PING client");
                 clients[i].active_counter++;
             }
         }
         pthread_mutex_unlock(&mutex);
-        sleep(5);
+        sleep(10);
     }
     return NULL;
 }
@@ -194,7 +195,7 @@ void *handle_termina_input(void *arg) {
             if (!sent) {
                 i = 0;
                 if (clients[i].reserved > -1){
-                    clients[i].reserved = 1;
+                    clients[i].reserved  ++;
                     send_msg(REQUEST, strlen(file_buffer), file_buffer, i);
                 }
 
@@ -256,8 +257,8 @@ void handle_message(int socket) {
 
             int i;
             for(i = 0; i < CLIENT_MAX; i++){
-                if(clients[i].reserved == 1 && strcmp(client_name, clients[i].name) == 0){
-                    clients[i].reserved = 0;
+                if(clients[i].reserved > 0 && strcmp(client_name, clients[i].name) == 0){
+                    clients[i].reserved --;
                     clients[i].active_counter = 0;
                     printf("Client %s is free now \n", client_name);
                 }
@@ -269,7 +270,7 @@ void handle_message(int socket) {
                 raise_error(" Could not read PONG message\n");
             pthread_mutex_lock(&mutex);
             int i = in(client_name, clients, (size_t) clients_amount, sizeof(Client), (__compar_fn_t) cmp_name);
-            if (i >= 0) clients[i].active_counter--;
+            if (i >= 0) clients[i].active_counter = clients[i].active_counter == 0 ? 0 : clients[i].active_counter-1;
             pthread_mutex_unlock(&mutex);
             break;
         }

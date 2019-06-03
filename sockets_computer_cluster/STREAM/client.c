@@ -116,6 +116,7 @@ void handle_message() {
                 handle_request();
                 break;
             case PING:
+                printf("HALKO \n");
                 send_message(PONG);
                 break;
             default:
