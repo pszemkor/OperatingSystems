@@ -16,11 +16,8 @@ char *name;
 enum connect_type c_type;
 int client_socket;
 
-int request_counter = 0;
-
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t request1_mutex = PTHREAD_MUTEX_INITIALIZER;
-//pthread_cond_t cond1 = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t request_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void init(char *connection_type, char *server_ip_path, char *port);
 
@@ -36,6 +33,9 @@ int signal_ = 0;
 
 int main(int argc, char *argv[]) {
 
+    if(argc != 4 && argc != 5){
+        printf("EXPECTED: NAME, CONNCECTION TYPE, [SOCKET_NAME] || [SERVER_IP, PORT]");
+    }
     name = argv[1];
     char *connection_type = argv[2];
     char *server_ip = argv[3];
@@ -53,15 +53,12 @@ int main(int argc, char *argv[]) {
 
 void* handle_request(void* arg) {
 
-
+    printf("I AM WORKING \n");
     struct request_t* got_arg = arg;
     struct request_t req;
     strcpy(req.text, got_arg->text);
     req.ID = got_arg->ID;
 
-    //printf("HALKOOOO \n");
-
-    //printf("STARTED WITH: %s\n", req.text);
     char *buffer = malloc(100 + 2 * strlen(req.text));
     char *buffer_res = malloc(100 + 2 * strlen(req.text));
 
@@ -78,55 +75,15 @@ void* handle_request(void* arg) {
         words_count++;
     }
     sprintf(buffer_res, "ID: %d|sum: %d|words count: \n %s",req.ID, words_count, buffer);
-    //printf("RES: %s\n", buffer_res);
     //sleep(5);
-    pthread_mutex_lock(&request1_mutex);
+    pthread_mutex_lock(&request_mutex);
     send_message(RESULT, buffer_res);
-    pthread_mutex_unlock(&request1_mutex);
-   // printf("RESULT SENT \n");
+    pthread_mutex_unlock(&request_mutex);
     free(buffer);
     free(buffer_res);
     return NULL;
 
 }
-
-
-//void handle_request() {
-//    printf("HALKOOOO \n");
-//    request_t req;
-//    if (read(client_socket, &req, sizeof(request_t)) <= 0) {
-//        raise_error("cannot read length");
-//    }
-//    printf("STARTED WITH: %s\n", req.text);
-////    printf("words: %d \n", words_count);
-////    printf("HANDLING REQUEST \n");
-//
-//    char *buffer = malloc(100 + 2 * strlen(req.text));
-//    char *buffer_res = malloc(100 + 2 * strlen(req.text));
-////    if (buffer == NULL) die_errno();
-//    sprintf(buffer, "echo '%s' | awk '{for(x=1;$x;++x)print $x}' | sort | uniq -c", (char *) req.text);
-//    FILE *result = popen(buffer, "r");
-//    //if (result == 0) { free(buffer); break; }
-//    int n = fread(buffer, 1, 99 + 2 * strlen(req.text), result);
-//    buffer[n] = '\0';
-//
-//    //todo -> check len!!!!
-//    int words_count = 1;
-//    char *res = strtok(req.text, " ");
-//    while (strtok(NULL, " ") && res) {
-//        words_count++;
-//    }
-//    sprintf(buffer_res, "sum: %d || %s", words_count, buffer);
-//    printf("RES: %s\n", buffer_res);
-//
-//    pthread_mutex_lock(&request1_mutex);
-//    send_message(RESULT, buffer_res);
-//    pthread_mutex_unlock(&request1_mutex);
-//    printf("RESULT SENT \n");
-//    free(buffer);
-//    free(buffer_res);
-//
-//}
 
 void send_message(uint8_t message_type, char *value) {
     message_t msg;
@@ -135,14 +92,12 @@ void send_message(uint8_t message_type, char *value) {
     msg.connect_type = c_type;
     if(value){
         snprintf(msg.value, strlen(value), "%s", value);
-        printf("RES: %s\n", msg.value);
-    }
-    //msg.fd = client_socket;
+        //printf("RES: %s\n", msg.value);
+    };
     pthread_mutex_lock(&mutex);
     if (write(client_socket, &msg, sizeof(message_t)) != sizeof(message_t))
         raise_error("\nError : Could not send message\n");
-    pthread_mutex_unlock(&mutex);
-    //printf("MESSAGE SENT \n");
+    pthread_mutex_unlock(&mutex);;
 }
 
 void register_on_server() {
@@ -169,30 +124,24 @@ void handle_message() {
     pthread_t thread;
     int x = 1;
     while (x) {
-       // printf("GOT STH \n");
         if (read(client_socket, &message_type, sizeof(uint8_t)) != sizeof(uint8_t))
-            raise_error(" Could not read message type");
-        //printf("HANDLING: %d \n", message_type);
+            raise_error(" Could not read message type");;
         switch (message_type) {
             case REQUEST:
                 printf("GOT REQUEST \n");
-                //handle_request();
                 request_t req;
                 if (read(client_socket, &req, sizeof(request_t)) <= 0) {
                     raise_error("cannot read length");
                 }
                 pthread_create(&thread, NULL, handle_request, &req);
                 pthread_detach(thread);
-                //sleep(1);
                 break;
             case PING:
-                //printf("GOT PING \n");
-                pthread_mutex_lock(&request1_mutex);
+                pthread_mutex_lock(&request_mutex);
                 send_message(PONG, NULL);
-                pthread_mutex_unlock(&request1_mutex);
+                pthread_mutex_unlock(&request_mutex);
                 break;
             default:
-                //printf("Unknown message type %d\n", message_type);
                 break;
         }
     }
@@ -200,7 +149,6 @@ void handle_message() {
 
 void handle_signals(int signo) {
     signal_++;
-    printf("KILLED BY SIGNAL \n");
     exit(1);
 }
 
@@ -219,7 +167,6 @@ void init(char *connection_type, char *server_ip_path, char *port) {
         if (port_num < 1024 || port_num > 65535) {
             raise_error("wrong port");
         }
-
         struct sockaddr_in web_address;
         memset(&web_address, 0, sizeof(struct sockaddr_in));
 
@@ -243,9 +190,6 @@ void init(char *connection_type, char *server_ip_path, char *port) {
 
     } else if (strcmp("LOCAL", connection_type) == 0) {
         c_type = LOCAL;
-
-        //char *unix_path = server_ip_path;
-
         //todo -> check len of unix_path
 
         if ((client_socket = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
@@ -272,12 +216,12 @@ void init(char *connection_type, char *server_ip_path, char *port) {
 }
 
 void clean() {
+    unlink(name);
     if (signal_ > 0){
         send_message(UNREGISTER, NULL);
-        unlink(name);
     }
 
     if (close(client_socket) == -1)
         fprintf(stderr, "\n Could not close Socket\n");
-    unlink(name);
+
 }

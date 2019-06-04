@@ -17,6 +17,9 @@
 #include <arpa/inet.h>
 #include "common.h"
 
+
+#define INPUT_BUFFER_SIZE 256
+
 size_t get_file_size(const char *file_name) {
     int fd;
     if ((fd = open(file_name, O_RDONLY)) == -1) {
@@ -141,9 +144,9 @@ void *handler_terminal(void *arg) {
     request_t req;
     int true = 1;
     while (true) {
-        char buffer[256];
+        char buffer[INPUT_BUFFER_SIZE];
         printf("Enter command: \n");
-        fgets(buffer, 256, stdin);
+        fgets(buffer, INPUT_BUFFER_SIZE, stdin);
         memset(req.text, 0, sizeof(req.text));
         sscanf(buffer, "%s", buffer);
         uint8_t message_type = REQUEST;
@@ -159,41 +162,26 @@ void *handler_terminal(void *arg) {
         id++;
         printf("REQUEST ID: %d \n", id);
         req.ID = id;
-        // printf("TO SEND: %s \n", req.text);
         int i = 0;
-        int sent = 0;
+        int min = 90000;
+        int index = 0;
         for (i = 0; i < clients_amount; i++) {
-            if (clients[i].reserved == 0) {
-                printf("Request sent to %s \n", clients[i].name);
-
-                int socket = clients[i].connect_type == WEB ? web_socket : local_socket;
-                if (sendto(socket, &message_type, 1, 0, clients[i].sockaddr, clients[i].socklen) != 1) {
-                    raise_error("cannot sendto");
-                }
-                if (sendto(socket, &req, sizeof(request_t), 0, clients[i].sockaddr, clients[i].socklen) !=
-                    sizeof(request_t)) {
-                    raise_error("cannot sendto");
-                }
-                sent = 1;
-                clients[i].reserved++;
-                break;
-
+            if (min > clients[i].reserved) {
+                min = clients[i].reserved;
+                index = i;
             }
         }
-        if (!sent) {
-            i = 0;
-            if (clients[i].reserved > -1) {
-                int socket = clients[i].connect_type == WEB ? web_socket : local_socket;
-                if (sendto(socket, &message_type, 1, 0, clients[i].sockaddr, clients[i].socklen) != 1) {
-                    raise_error("cannot sendto");
-                }
-                if (sendto(socket, &req, sizeof(request_t), 0, clients[i].sockaddr, clients[i].socklen) !=
-                    sizeof(request_t)) {
-                    raise_error("cannot sendto");
-                }
-                clients[i].reserved++;
-            }
 
+        i = index;
+        clients[i].reserved++;
+        printf("Request sent to %s \n", clients[i].name);
+        int socket = clients[i].connect_type == WEB ? web_socket : local_socket;
+        if (sendto(socket, &message_type, 1, 0, clients[i].sockaddr, clients[i].socklen) != 1) {
+            raise_error("cannot sendto");
+        }
+        if (sendto(socket, &req, sizeof(request_t), 0, clients[i].sockaddr, clients[i].socklen) !=
+            sizeof(request_t)) {
+            raise_error("cannot sendto");
         }
 
     }
@@ -207,8 +195,6 @@ void handle_message(int socket) {
 
     if (recvfrom(socket, &msg, sizeof(message_t), 0, sockaddr, &socklen) != sizeof(message_t))
         raise_error("Could not receive new message\n");
-    //printf("RECEIVED msg from socket: %d \n", socket);
-    // printf("MSG: %d, %s, %d, socket: %d \n", msg.connect_type, msg.name, msg.message_type, msg.fd);
     switch (msg.message_type) {
         case REGISTER: {
             register_client(socket, msg, sockaddr, socklen);
@@ -223,16 +209,12 @@ void handle_message(int socket) {
             int i;
             for (i = 0; i < clients_amount; i++) {
                 if (strcmp(clients[i].name, msg.name) == 0) {
-                    clients[i].reserved--;
+                    //clients[i].reserved--;
                     clients[i].active_counter = 0;
                 }
             }
-
-            //printf("RES \n");
             printf("RESULT: %s \n", msg.value);
             printf("from: %s \n", msg.name);
-
-
             break;
         }
         case PONG: {
@@ -360,7 +342,7 @@ void init(char *port, char *path) {
     if (epoll_ctl(epoll, EPOLL_CTL_ADD, local_socket, &event) == -1)
         raise_error(" Could not add Local Socket to epoll\n");
 
-
+    //****************** THREADS ***********************
     if (pthread_create(&ping, NULL, ping_clients, NULL) != 0)
         raise_error(" Could not create Pinger Thread");
     if (pthread_create(&command, NULL, handler_terminal, NULL) != 0)
@@ -368,13 +350,12 @@ void init(char *port, char *path) {
 }
 
 void clean() {
-    printf("CLEANUP \n");
+
     pthread_cancel(ping);
     pthread_cancel(command);
     int i;
     for (i = 0; i < clients_amount; i++) {
         if (clients[i].reserved >= 0) {
-            printf("Request sent to %s \n", clients[i].name);
             uint8_t message_type = END;
             int socket = clients[i].connect_type == WEB ? web_socket : local_socket;
             if (sendto(socket, &message_type, 1, 0, clients[i].sockaddr, clients[i].socklen) != 1) {
