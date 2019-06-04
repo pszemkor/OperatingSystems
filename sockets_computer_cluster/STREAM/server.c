@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 #include "common.h"
 
+#define MAX_BUFFER_SIZE 256
 size_t get_file_size(const char *file_name) {
     int fd;
     if ((fd = open(file_name, O_RDONLY)) == -1) {
@@ -63,7 +64,7 @@ void clean();
 
 void *ping_routine(void *);
 
-void *hendle_terminal(void *);
+void *handle_terminal(void *);
 
 void handle_connection(int);
 
@@ -113,7 +114,6 @@ int main(int argc, char *argv[]) {
     while (x) {
         if (epoll_wait(epoll, &event, 1, -1) == -1)
             raise_error(" epoll_wait failed\n");
-        //printf("A JA WIEM PO CO? \n");
         if (event.data.fd < 0)
             handle_connection(-event.data.fd);
         else
@@ -139,7 +139,6 @@ void *ping_routine(void *arg) {
                     raise_error(" Could not PING client");
 
                 clients[i].active_counter++;
-                //printf("INC UN: %d \n",clients[i].active_counter);
             }
         }
         pthread_mutex_unlock(&mutex);
@@ -161,20 +160,18 @@ void send_msg(int type, int len, request_t *req, int i) {
 
 }
 
-void *hendle_terminal(void *arg) {
+void *handle_terminal(void *arg) {
 
     int true = 1;
     while (true) {
-        char buffer[256];
-        memset(buffer,0, 256);
+        char buffer[MAX_BUFFER_SIZE];
+        memset(buffer,0, MAX_BUFFER_SIZE);
         printf("Enter command: \n");
-        fgets( buffer,256,stdin);
-        char file_buffer[10240];
-        memset( file_buffer, '\0', sizeof(char)*10240);
-        int scan_res = sscanf(buffer, "%s", file_buffer);
-        printf("state: %d \n", scan_res);
+        fgets( buffer,MAX_BUFFER_SIZE,stdin);
+        char file_buffer[MAX_MSG_SIZE];
+        memset( file_buffer, '\0', sizeof(char)*MAX_MSG_SIZE);
+        sscanf(buffer, "%s", file_buffer);
         request_t req;
-        if (scan_res == 1) {
             id++;
             printf("REQUEST ID: %d \n", id);
             printf("%s \n", file_buffer);
@@ -189,28 +186,21 @@ void *hendle_terminal(void *arg) {
                 printf("WRONG FILE \n");
                 continue;
             }
+
             int i = 0;
-            int sent = 0;
+            int min = 90000;
+            int index = 0;
             for (i = 0; i < clients_amount; i++) {
-                if (clients[i].reserved == 0) {
-                    printf("Request sent to %s \n", clients[i].name);
-                    clients[i].reserved = 1;
-                    send_msg(REQUEST, sizeof(req), &req, i);
-                    sent = 1;
-                    break;
+                if (clients[i].reserved  < min) {
+                    min = clients[i].reserved;
+                    index = i;
                 }
             }
-            if (!sent) {
-                i = 0;
-                if (clients[i].reserved > -1){
-                    clients[i].reserved  ++;
-                    send_msg(REQUEST, sizeof(req), &req, i);
-                }
+            i = index;
+            printf("Request sent to %s \n", clients[i].name);
+            clients[i].reserved++;
+            send_msg(REQUEST, sizeof(req), &req, i);
 
-            }
-            printf("REQUEST SENT \n");
-
-        }
 
     }
     return NULL;
@@ -252,7 +242,6 @@ void handle_message(int socket) {
         }
         case RESULT: {
             printf("SERVER GOT RESULT \n");
-
             if (read(socket, client_name, message_size) < 0)
                 raise_error("read res name");
             int size;
@@ -268,7 +257,7 @@ void handle_message(int socket) {
             int i;
             for(i = 0; i < CLIENT_MAX; i++){
                 if(clients[i].reserved > 0 && strcmp(client_name, clients[i].name) == 0){
-                    clients[i].reserved --;
+//                    clients[i].reserved --;
                     clients[i].active_counter = 0;
                     printf("Client %s is free now \n", client_name);
                 }
@@ -333,9 +322,7 @@ void unregister_client(char *client_name) {
 
 void delete_client(int i) {
     delete_socket(clients[i].fd);
-
     free(clients[i].name);
-
     clients_amount--;
     for (int j = i; j < clients_amount; ++j)
         clients[j] = clients[j + 1];
@@ -352,7 +339,6 @@ void delete_socket(int socket) {
 }
 
 void handle_signal(int signo) {
-    //clean();
     printf("\nSIGINT\n");
     exit(1);
 }
@@ -420,7 +406,7 @@ void init(char *port, char *path) {
 
     if (pthread_create(&ping, NULL, ping_routine, NULL) != 0)
         raise_error(" Could not create Pinger Thread");
-    if (pthread_create(&command, NULL, hendle_terminal, NULL) != 0)
+    if (pthread_create(&command, NULL, handle_terminal, NULL) != 0)
         raise_error(" Could not create Commander Thread");
 }
 

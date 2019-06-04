@@ -13,6 +13,8 @@
 #define CLIENT_MAX 12
 #define TYPE_SIZE 1
 #define LEN_SIZE 2
+
+#define MAX_MSG_SIZE 10240
 typedef enum message_type {
     REGISTER = 0,
     UNREGISTER = 1,
@@ -38,7 +40,7 @@ typedef struct Client {
 } Client;
 
 typedef struct request_t{
-    char text[10240];
+    char text[MAX_MSG_SIZE];
     int ID;
 } request_t;
 
