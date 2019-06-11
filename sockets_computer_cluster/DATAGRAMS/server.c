@@ -96,11 +96,13 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 Client clients[CLIENT_MAX];
 int clients_amount = 0;
 
+int current_client_pointer = 0;
+
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
     if (argc != 3)
-        raise_error("\nUsage: %s <port number> <unix path>\n");
+        raise_error("Required arguments: PORT_NUMBER SOCKET_PATH (for unix sockets) \n");
     if (atexit(clean) == -1)
         raise_error(" Could not set AtExit\n");
 
@@ -163,15 +165,9 @@ void *handler_terminal(void *arg) {
         printf("REQUEST ID: %d \n", id);
         req.ID = id;
         int i = 0;
-        int min = 90000;
         int index = 0;
-        for (i = 0; i < clients_amount; i++) {
-            if (min > clients[i].reserved) {
-                min = clients[i].reserved;
-                index = i;
-            }
-        }
-
+        index = current_client_pointer % clients_amount;
+        current_client_pointer++;
         i = index;
         clients[i].reserved++;
         printf("Request sent to %s \n", clients[i].name);
@@ -209,7 +205,7 @@ void handle_message(int socket) {
             int i;
             for (i = 0; i < clients_amount; i++) {
                 if (strcmp(clients[i].name, msg.name) == 0) {
-                    //clients[i].reserved--;
+                    clients[i].reserved--;
                     clients[i].active_counter = 0;
                 }
             }
