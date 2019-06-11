@@ -18,6 +18,7 @@
 #include "common.h"
 
 #define MAX_BUFFER_SIZE 256
+
 size_t get_file_size(const char *file_name) {
     int fd;
     if ((fd = open(file_name, O_RDONLY)) == -1) {
@@ -91,6 +92,7 @@ int local_socket;
 int epoll;
 char *local_path;
 int id;
+int current_client_pointer = 0;
 
 pthread_t ping;
 pthread_t command;
@@ -131,7 +133,7 @@ void *ping_routine(void *arg) {
         pthread_mutex_lock(&mutex);
         for (int i = 0; i < clients_amount; ++i) {
             if (clients[i].active_counter != 0) {
-                printf("num: %d \n",clients[i].active_counter );
+                printf("num: %d \n", clients[i].active_counter);
                 printf("Client \"%s\" do not respond. Removing from registered clients\n", clients[i].name);
                 delete_client(i--);
             } else {
@@ -165,41 +167,42 @@ void *handle_terminal(void *arg) {
     int true = 1;
     while (true) {
         char buffer[MAX_BUFFER_SIZE];
-        memset(buffer,0, MAX_BUFFER_SIZE);
+        memset(buffer, 0, MAX_BUFFER_SIZE);
         printf("Enter command: \n");
-        fgets( buffer,MAX_BUFFER_SIZE,stdin);
+        fgets(buffer, MAX_BUFFER_SIZE, stdin);
         char file_buffer[MAX_MSG_SIZE];
-        memset( file_buffer, '\0', sizeof(char)*MAX_MSG_SIZE);
+        memset(file_buffer, '\0', sizeof(char) * MAX_MSG_SIZE);
         sscanf(buffer, "%s", file_buffer);
         request_t req;
-            id++;
-            printf("REQUEST ID: %d \n", id);
-            printf("%s \n", file_buffer);
-            memset(req.text, 0, sizeof(req.text));
-            int status = read_whole_file(file_buffer, req.text);
-            req.ID = id;
-            if(strlen(file_buffer) <= 0){
-                printf("cannot send empty file \n");
-                continue;
-            }
-            if (status < 0) {
-                printf("WRONG FILE \n");
-                continue;
-            }
+        id++;
+        printf("REQUEST ID: %d \n", id);
+        printf("%s \n", file_buffer);
+        memset(req.text, 0, sizeof(req.text));
+        int status = read_whole_file(file_buffer, req.text);
+        req.ID = id;
+        if (strlen(file_buffer) <= 0) {
+            printf("cannot send empty file \n");
+            continue;
+        }
+        if (status < 0) {
+            printf("WRONG FILE \n");
+            continue;
+        }
 
-            int i = 0;
-            int min = 90000;
-            int index = 0;
-            for (i = 0; i < clients_amount; i++) {
-                if (clients[i].reserved  < min) {
-                    min = clients[i].reserved;
-                    index = i;
-                }
-            }
-            i = index;
-            printf("Request sent to %s \n", clients[i].name);
-            clients[i].reserved++;
-            send_msg(REQUEST, sizeof(req), &req, i);
+        int i = 0;
+//            int min = 90000;
+//        int index = 0;
+//            for (i = 0; i < clients_amount; i++) {
+//                if (clients[i].reserved  < min) {
+//                    min = clients[i].reserved;
+//                    index = i;
+//                }
+//            }
+        i = current_client_pointer % clients_amount;
+        current_client_pointer++;
+        printf("Request sent to %s \n", clients[i].name);
+        clients[i].reserved++;
+        send_msg(REQUEST, sizeof(req), &req, i);
 
 
     }
@@ -247,17 +250,17 @@ void handle_message(int socket) {
             int size;
             if (read(socket, &size, sizeof(int)) < 0)
                 raise_error("size of res");
-            char* result = malloc(size);
+            char *result = malloc(size);
             memset(result, 0, size);
             if (read(socket, result, size) < 0)
                 raise_error("result");
 
-            printf("Computations from: %s : %s \n",client_name, result);
+            printf("Computations from: %s : %s \n", client_name, result);
 
             int i;
-            for(i = 0; i < CLIENT_MAX; i++){
-                if(clients[i].reserved > 0 && strcmp(client_name, clients[i].name) == 0){
-//                    clients[i].reserved --;
+            for (i = 0; i < CLIENT_MAX; i++) {
+                if (clients[i].reserved > 0 && strcmp(client_name, clients[i].name) == 0) {
+                    clients[i].reserved --;
                     clients[i].active_counter = 0;
                     printf("Client %s is free now \n", client_name);
                 }
@@ -270,7 +273,7 @@ void handle_message(int socket) {
                 raise_error(" Could not read PONG message\n");
             pthread_mutex_lock(&mutex);
             int i = in(client_name, clients, (size_t) clients_amount, sizeof(Client), (__compar_fn_t) cmp_name);
-            if (i >= 0) clients[i].active_counter = clients[i].active_counter == 0 ? 0 : clients[i].active_counter-1;
+            if (i >= 0) clients[i].active_counter = clients[i].active_counter == 0 ? 0 : clients[i].active_counter - 1;
             pthread_mutex_unlock(&mutex);
             break;
         }
@@ -362,14 +365,15 @@ void init(char *port, char *path) {
     struct sockaddr_in web_address;
     memset(&web_address, 0, sizeof(struct sockaddr_in));
     web_address.sin_family = AF_INET;
-    web_address.sin_addr.s_addr =htonl(INADDR_ANY); //inet_addr("path"); //inet_addr("192.168.0.66"); //htonl(INADDR_ANY);
+    web_address.sin_addr.s_addr = htonl(
+            INADDR_ANY); //inet_addr("path"); //inet_addr("192.168.0.66"); //htonl(INADDR_ANY);
     web_address.sin_port = htons(port_num);
 
     if ((web_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         raise_error(" Could not create web socket\n");
 
     int yes = 1;
-    if (setsockopt(web_socket,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+    if (setsockopt(web_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
         perror("setsockopt");
         exit(1);
     }
