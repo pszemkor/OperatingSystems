@@ -1,4 +1,4 @@
-# Zadania - Zestaw 10
+# Klaster obliczeniowy
 Celem zadania jest napisanie prostego systemu pozwalającego na wykonywanie zadań na "klastrze obliczeniowym".
 
 System oparty jest o centralny serwer oraz połączonych do niego klientów.
